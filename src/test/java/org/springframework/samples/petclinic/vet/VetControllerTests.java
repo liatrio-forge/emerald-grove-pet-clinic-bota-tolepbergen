@@ -33,6 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -116,7 +117,7 @@ class VetControllerTests {
 
 		mockMvc.perform(get("/vets.html").param("specialty", "radiology"))
 			.andExpect(status().isOk())
-			.andExpect(model().attributeExists("listVets"))
+			.andExpect(model().attribute("listVets", hasSize(1)))
 			.andExpect(model().attribute("selectedSpecialty", "radiology"))
 			.andExpect(view().name("vets/vetList"));
 	}
@@ -127,7 +128,7 @@ class VetControllerTests {
 
 		mockMvc.perform(get("/vets.html").param("specialty", "none"))
 			.andExpect(status().isOk())
-			.andExpect(model().attributeExists("listVets"))
+			.andExpect(model().attribute("listVets", hasSize(1)))
 			.andExpect(model().attribute("selectedSpecialty", "none"))
 			.andExpect(view().name("vets/vetList"));
 	}

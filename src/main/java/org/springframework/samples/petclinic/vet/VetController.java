@@ -48,9 +48,10 @@ class VetController {
 	@GetMapping("/vets.html")
 	public String showVetList(@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "all") String specialty, Model model) {
-		Page<Vet> paginated = findPaginated(page, specialty);
+		String normalizedSpecialty = specialty.strip().toLowerCase();
+		Page<Vet> paginated = findPaginated(page, normalizedSpecialty);
 		model.addAttribute("specialties", specialtyRepository.findAll());
-		model.addAttribute("selectedSpecialty", specialty);
+		model.addAttribute("selectedSpecialty", normalizedSpecialty);
 		return addPaginationModel(page, paginated, model);
 	}
 
