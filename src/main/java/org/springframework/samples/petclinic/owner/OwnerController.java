@@ -137,6 +137,7 @@ class OwnerController {
 		}
 
 		// multiple owners found
+		model.addAttribute("lastName", lastName);
 		model.addAttribute("telephone", telephone);
 		model.addAttribute("city", city);
 		return addPaginationModel(page, model, ownersResults);

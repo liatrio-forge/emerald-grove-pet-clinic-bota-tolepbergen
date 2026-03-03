@@ -29,7 +29,7 @@
     </tbody>
   </table>
   <div th:if="${totalPages > 1}" class="liatrio-pagination"
-    th:with="searchParams=${(telephone != null ? '&amp;telephone=' + telephone : '') + (city != null ? '&amp;city=' + city : '')}">
+    th:with="searchParams=${(lastName != null and !lastName.isEmpty() ? '&amp;lastName=' + lastName : '') + (telephone != null ? '&amp;telephone=' + telephone : '') + (city != null ? '&amp;city=' + city : '')}">
     <span th:text="#{pages}">Pages:</span>
     <span>[</span>
     <span th:each="i: ${#numbers.sequence(1, totalPages)}">
