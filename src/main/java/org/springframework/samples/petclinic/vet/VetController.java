@@ -15,6 +15,7 @@
  */
 package org.springframework.samples.petclinic.vet;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -37,17 +38,20 @@ class VetController {
 
 	private final VetRepository vetRepository;
 
-	public VetController(VetRepository vetRepository) {
+	private final SpecialtyRepository specialtyRepository;
+
+	public VetController(VetRepository vetRepository, SpecialtyRepository specialtyRepository) {
 		this.vetRepository = vetRepository;
+		this.specialtyRepository = specialtyRepository;
 	}
 
 	@GetMapping("/vets.html")
-	public String showVetList(@RequestParam(defaultValue = "1") int page, Model model) {
-		// Here we are returning an object of type 'Vets' rather than a collection of Vet
-		// objects so it is simpler for Object-Xml mapping
-		Vets vets = new Vets();
-		Page<Vet> paginated = findPaginated(page);
-		vets.getVetList().addAll(paginated.toList());
+	public String showVetList(@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "all") String specialty, Model model) {
+		String normalizedSpecialty = specialty.strip().toLowerCase();
+		Page<Vet> paginated = findPaginated(page, normalizedSpecialty);
+		model.addAttribute("specialties", specialtyRepository.findAll());
+		model.addAttribute("selectedSpecialty", normalizedSpecialty);
 		return addPaginationModel(page, paginated, model);
 	}
 
@@ -60,9 +64,15 @@ class VetController {
 		return "vets/vetList";
 	}
 
-	private Page<Vet> findPaginated(int page) {
+	private Page<Vet> findPaginated(int page, String specialty) {
 		int pageSize = 5;
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
+		if ("none".equals(specialty)) {
+			return vetRepository.findByNoSpecialty(pageable);
+		}
+		if (!"all".equals(specialty)) {
+			return vetRepository.findBySpecialtyName(specialty, pageable);
+		}
 		return vetRepository.findAll(pageable);
 	}
 
