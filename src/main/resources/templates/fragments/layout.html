@@ -66,6 +66,23 @@
           </li>
 
         </ul>
+
+        <ul class="navbar-nav ms-2" id="languageSelector">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+               th:title="#{lang.selector}">
+              <span class="fa fa-globe" aria-hidden="true"></span>
+              <span th:if="${#locale.language == 'es'}" th:text="#{lang.es}">Español</span>
+              <span th:if="${#locale.language == 'de'}" th:text="#{lang.de}">Deutsch</span>
+              <span th:if="${#locale.language != 'es' and #locale.language != 'de'}" th:text="#{lang.en}">English</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" th:classappend="${#locale.language == 'en' or (#locale.language != 'es' and #locale.language != 'de')} ? ' active'" th:href="@{''(lang='en')}" th:text="#{lang.en}">English</a></li>
+              <li><a class="dropdown-item" th:classappend="${#locale.language == 'es'} ? ' active'" th:href="@{''(lang='es')}" th:text="#{lang.es}">Español</a></li>
+              <li><a class="dropdown-item" th:classappend="${#locale.language == 'de'} ? ' active'" th:href="@{''(lang='de')}" th:text="#{lang.de}">Deutsch</a></li>
+            </ul>
+          </li>
+        </ul>
       </div>
     </div>
   </nav>

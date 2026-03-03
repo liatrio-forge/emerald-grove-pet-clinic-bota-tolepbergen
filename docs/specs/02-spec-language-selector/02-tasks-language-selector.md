@@ -40,7 +40,7 @@
 - [x] 1.2 Make the test pass (GREEN): add the same 4 keys (`lang.en`, `lang.es`, `lang.de`, `lang.selector`) to all non-English locale files (`messages_es.properties`, `messages_de.properties`, `messages_fa.properties`, `messages_ko.properties`, `messages_pt.properties`, `messages_ru.properties`, `messages_tr.properties`). Use native language names: `lang.en=English`, `lang.es=Español`, `lang.de=Deutsch` in all files (language names stay in their native form regardless of locale). `lang.selector` should be translated per locale (e.g., English: "Language", Spanish: "Idioma", German: "Sprache")
 - [x] 1.3 Run `./mvnw test -Dtest=I18nPropertiesSyncTest` and verify it passes
 
-### [ ] 2.0 Add language selector dropdown to navbar
+### [x] 2.0 Add language selector dropdown to navbar
 
 #### 2.0 Proof Artifact(s)
 
@@ -49,9 +49,9 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Write a failing integration test (RED): create `LanguageSelectorIntegrationTest.java` in `src/test/java/org/springframework/samples/petclinic/system/`. Use `@SpringBootTest` with `MockMvc`. Test that a GET to `/` returns HTML containing a language selector element (e.g., an element with `id="languageSelector"`) with three language options. Run the test and confirm it fails
-- [ ] 2.2 Add the dropdown to `layout.html` (GREEN): in the navbar's `<div class="collapse navbar-collapse" id="main-navbar">`, after the existing `<ul class="nav navbar-nav ms-auto">` block, add a new `<ul>` with a Bootstrap 5 dropdown. The trigger button should show a `fa-globe` icon and the current language name using `th:text`. The dropdown menu should list English, Español, and Deutsch as links. Each link should use `th:href` to append `?lang=xx` to the current URL. Use `th:classappend` to add `active` class to the currently selected language based on `#locale.language`
-- [ ] 2.3 Run the integration test from 2.1 and verify it passes. Also run `I18nPropertiesSyncTest` and `checkNonInternationalizedStrings` to ensure no regressions
+- [x] 2.1 Write a failing integration test (RED): create `LanguageSelectorIntegrationTest.java` in `src/test/java/org/springframework/samples/petclinic/system/`. Use `@SpringBootTest` with `MockMvc`. Test that a GET to `/` returns HTML containing a language selector element (e.g., an element with `id="languageSelector"`) with three language options. Run the test and confirm it fails
+- [x] 2.2 Add the dropdown to `layout.html` (GREEN): in the navbar's `<div class="collapse navbar-collapse" id="main-navbar">`, after the existing `<ul class="nav navbar-nav ms-auto">` block, add a new `<ul>` with a Bootstrap 5 dropdown. The trigger button should show a `fa-globe` icon and the current language name using `th:text`. The dropdown menu should list English, Español, and Deutsch as links. Each link should use `th:href` to append `?lang=xx` to the current URL. Use `th:classappend` to add `active` class to the currently selected language based on `#locale.language`
+- [x] 2.3 Run the integration test from 2.1 and verify it passes. Also run `I18nPropertiesSyncTest` and `checkNonInternationalizedStrings` to ensure no regressions
 
 ### [ ] 3.0 Wire dropdown to locale switching and verify persistence
 
