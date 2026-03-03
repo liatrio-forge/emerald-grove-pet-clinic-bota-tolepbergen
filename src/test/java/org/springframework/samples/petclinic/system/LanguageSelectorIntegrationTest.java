@@ -54,4 +54,22 @@ class LanguageSelectorIntegrationTest {
 		assertThat(resp.getBody()).contains("Deutsch");
 	}
 
+	@Test
+	void shouldSwitchToSpanishWhenLangEsRequested() {
+		ResponseEntity<String> resp = getHtml("/?lang=es");
+		assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(resp.getBody()).contains("Inicio");
+		assertThat(resp.getBody()).contains("Buscar propietarios");
+		assertThat(resp.getBody()).contains("Veterinarios");
+	}
+
+	@Test
+	void shouldSwitchToGermanWhenLangDeRequested() {
+		ResponseEntity<String> resp = getHtml("/?lang=de");
+		assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(resp.getBody()).contains("Startseite");
+		assertThat(resp.getBody()).contains("Besitzer suchen");
+		assertThat(resp.getBody()).contains("Tierärzte");
+	}
+
 }

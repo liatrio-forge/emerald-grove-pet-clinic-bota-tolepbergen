@@ -53,7 +53,7 @@
 - [x] 2.2 Add the dropdown to `layout.html` (GREEN): in the navbar's `<div class="collapse navbar-collapse" id="main-navbar">`, after the existing `<ul class="nav navbar-nav ms-auto">` block, add a new `<ul>` with a Bootstrap 5 dropdown. The trigger button should show a `fa-globe` icon and the current language name using `th:text`. The dropdown menu should list English, Español, and Deutsch as links. Each link should use `th:href` to append `?lang=xx` to the current URL. Use `th:classappend` to add `active` class to the currently selected language based on `#locale.language`
 - [x] 2.3 Run the integration test from 2.1 and verify it passes. Also run `I18nPropertiesSyncTest` and `checkNonInternationalizedStrings` to ensure no regressions
 
-### [ ] 3.0 Wire dropdown to locale switching and verify persistence
+### [x] 3.0 Wire dropdown to locale switching and verify persistence
 
 #### 3.0 Proof Artifact(s)
 
@@ -64,10 +64,10 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Write a failing test (RED): add test methods to `LanguageSelectorIntegrationTest.java` that perform GET requests with `?lang=es` and `?lang=de` parameters, then assert the response contains the translated nav labels (e.g., `Inicio` for Spanish home, `Startseite` for German home) and that the active language in the dropdown matches the requested locale. Run and confirm they fail
-- [ ] 3.2 Make tests pass (GREEN): ensure the dropdown links in `layout.html` correctly generate URLs with `?lang=xx` parameters. The existing `LocaleChangeInterceptor` and `SessionLocaleResolver` handle the rest — verify the Thymeleaf expressions correctly resolve translated text and highlight the active language
-- [ ] 3.3 Run full test suite (`./mvnw test`) and verify all tests pass with no regressions
-- [ ] 3.4 Start the app (`./mvnw spring-boot:run`), manually verify the dropdown works in browser, and capture screenshots for proof artifacts. Save screenshots to `docs/specs/02-spec-language-selector/02-proofs/`
+- [x] 3.1 Write a failing test (RED): add test methods to `LanguageSelectorIntegrationTest.java` that perform GET requests with `?lang=es` and `?lang=de` parameters, then assert the response contains the translated nav labels (e.g., `Inicio` for Spanish home, `Startseite` for German home) and that the active language in the dropdown matches the requested locale. Run and confirm they fail
+- [x] 3.2 Make tests pass (GREEN): ensure the dropdown links in `layout.html` correctly generate URLs with `?lang=xx` parameters. The existing `LocaleChangeInterceptor` and `SessionLocaleResolver` handle the rest — verify the Thymeleaf expressions correctly resolve translated text and highlight the active language
+- [x] 3.3 Run full test suite (`./mvnw test`) and verify all tests pass with no regressions
+- [x] 3.4 Start the app (`./mvnw spring-boot:run`), manually verify the dropdown works in browser, and capture screenshots for proof artifacts. Save screenshots to `docs/specs/02-spec-language-selector/02-proofs/`
 
 ### [ ] 4.0 Add Playwright E2E tests for language switching and persistence
 
