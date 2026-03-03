@@ -99,6 +99,44 @@ class ClinicServiceTests {
 	}
 
 	@Test
+	void shouldFindOwnersByLastNameAndCity() {
+		// Davis + Madison → only Betty Davis is in Sun Prairie, Harold Davis is in
+		// Windsor
+		// Neither Davis is in Madison, so expect 0
+		Page<Owner> owners = this.owners.findByFilters("Davis", null, "Madison", pageable);
+		assertThat(owners).isEmpty();
+
+		// Davis + Sun Prairie → Betty Davis
+		owners = this.owners.findByFilters("Davis", null, "Sun Prairie", pageable);
+		assertThat(owners).hasSize(1);
+		assertThat(owners.getContent().get(0).getFirstName()).isEqualTo("Betty");
+	}
+
+	@Test
+	void shouldFindOwnersByTelephone() {
+		// All owners have telephone starting with "608555"
+		Page<Owner> owners = this.owners.findByFilters("", "608555", null, pageable);
+		assertThat(owners).hasSize(10);
+
+		// Telephone prefix "6085551" matches George Franklin (6085551023) and Betty
+		// Davis (6085551749)
+		owners = this.owners.findByFilters("", "6085551", null, pageable);
+		assertThat(owners).hasSize(2);
+	}
+
+	@Test
+	void shouldFindOwnersByAllCriteria() {
+		// lastName "Franklin" + city "Madison" + telephone "608" → George Franklin
+		Page<Owner> owners = this.owners.findByFilters("Franklin", "608", "Madison", pageable);
+		assertThat(owners).hasSize(1);
+		assertThat(owners.getContent().get(0).getFirstName()).isEqualTo("George");
+
+		// lastName "Franklin" + city "Windsor" → no match
+		owners = this.owners.findByFilters("Franklin", null, "Windsor", pageable);
+		assertThat(owners).isEmpty();
+	}
+
+	@Test
 	void shouldFindSingleOwnerWithPet() {
 		Optional<Owner> optionalOwner = this.owners.findById(1);
 		assertThat(optionalOwner).isPresent();
