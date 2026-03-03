@@ -19,7 +19,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
@@ -54,5 +56,24 @@ public interface VetRepository extends Repository<Vet, Integer> {
 	@Transactional(readOnly = true)
 	@Cacheable("vets")
 	Page<Vet> findAll(Pageable pageable) throws DataAccessException;
+
+	/**
+	 * Retrieve <code>Vet</code>s that have the given specialty name.
+	 * @param name the specialty name to filter by
+	 * @param pageable pagination information
+	 * @return a {@link Page} of matching <code>Vet</code>s
+	 */
+	@Transactional(readOnly = true)
+	@Query("SELECT DISTINCT v FROM Vet v JOIN v.specialties s WHERE LOWER(s.name) = LOWER(:name)")
+	Page<Vet> findBySpecialtyName(@Param("name") String name, Pageable pageable);
+
+	/**
+	 * Retrieve <code>Vet</code>s that have no specialties.
+	 * @param pageable pagination information
+	 * @return a {@link Page} of matching <code>Vet</code>s
+	 */
+	@Transactional(readOnly = true)
+	@Query("SELECT v FROM Vet v WHERE v.specialties IS EMPTY")
+	Page<Vet> findByNoSpecialty(Pageable pageable);
 
 }

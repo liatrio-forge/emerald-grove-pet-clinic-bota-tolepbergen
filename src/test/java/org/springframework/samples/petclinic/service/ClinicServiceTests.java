@@ -35,6 +35,8 @@ import org.springframework.samples.petclinic.owner.Pet;
 import org.springframework.samples.petclinic.owner.PetType;
 import org.springframework.samples.petclinic.owner.PetTypeRepository;
 import org.springframework.samples.petclinic.owner.Visit;
+import org.springframework.samples.petclinic.vet.Specialty;
+import org.springframework.samples.petclinic.vet.SpecialtyRepository;
 import org.springframework.samples.petclinic.vet.Vet;
 import org.springframework.samples.petclinic.vet.VetRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +83,9 @@ class ClinicServiceTests {
 
 	@Autowired
 	protected VetRepository vets;
+
+	@Autowired
+	protected SpecialtyRepository specialties;
 
 	private final Pageable pageable = Pageable.unpaged();
 
@@ -199,6 +204,29 @@ class ClinicServiceTests {
 		owner6 = optionalOwner.get();
 		pet7 = owner6.getPet(7);
 		assertThat(pet7.getName()).isEqualTo(newName);
+	}
+
+	@Test
+	void shouldFindAllSpecialties() {
+		Collection<Specialty> allSpecialties = this.specialties.findAll();
+		assertThat(allSpecialties).hasSize(3);
+		assertThat(allSpecialties).extracting("name").containsExactlyInAnyOrder("radiology", "surgery", "dentistry");
+	}
+
+	@Test
+	void shouldFindVetsBySpecialtyName() {
+		// surgery: Linda Douglas (id=3), Rafael Ortega (id=4)
+		Page<Vet> surgeryVets = this.vets.findBySpecialtyName("surgery", pageable);
+		assertThat(surgeryVets.getContent()).hasSize(2);
+		assertThat(surgeryVets.getContent()).extracting("lastName").containsExactlyInAnyOrder("Douglas", "Ortega");
+	}
+
+	@Test
+	void shouldFindVetsWithNoSpecialty() {
+		// No specialty: James Carter (id=1), Sharon Jenkins (id=6)
+		Page<Vet> noSpecialtyVets = this.vets.findByNoSpecialty(pageable);
+		assertThat(noSpecialtyVets.getContent()).hasSize(2);
+		assertThat(noSpecialtyVets.getContent()).extracting("lastName").containsExactlyInAnyOrder("Carter", "Jenkins");
 	}
 
 	@Test

@@ -16,6 +16,8 @@
 
 package org.springframework.samples.petclinic.vet;
 
+import java.util.List;
+
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -50,6 +53,9 @@ class VetControllerTests {
 
 	@MockitoBean
 	private VetRepository vets;
+
+	@MockitoBean
+	private SpecialtyRepository specialties;
 
 	private Vet james() {
 		Vet james = new Vet();
@@ -71,22 +77,67 @@ class VetControllerTests {
 		return helen;
 	}
 
+	private Specialty radiology() {
+		Specialty radiology = new Specialty();
+		radiology.setId(1);
+		radiology.setName("radiology");
+		return radiology;
+	}
+
+	private Specialty surgery() {
+		Specialty surgery = new Specialty();
+		surgery.setId(2);
+		surgery.setName("surgery");
+		return surgery;
+	}
+
 	@BeforeEach
 	void setup() {
 		given(this.vets.findAll()).willReturn(Lists.newArrayList(james(), helen()));
 		given(this.vets.findAll(any(Pageable.class)))
 			.willReturn(new PageImpl<Vet>(Lists.newArrayList(james(), helen())));
-
+		given(this.specialties.findAll()).willReturn(List.of(radiology(), surgery()));
 	}
 
 	@Test
 	void testShowVetListHtml() throws Exception {
-
 		mockMvc.perform(MockMvcRequestBuilders.get("/vets.html?page=1"))
 			.andExpect(status().isOk())
 			.andExpect(model().attributeExists("listVets"))
+			.andExpect(model().attributeExists("specialties"))
+			.andExpect(model().attribute("selectedSpecialty", "all"))
 			.andExpect(view().name("vets/vetList"));
+	}
 
+	@Test
+	void testShowVetListFilteredBySpecialty() throws Exception {
+		given(this.vets.findBySpecialtyName(eq("radiology"), any(Pageable.class)))
+			.willReturn(new PageImpl<Vet>(List.of(helen())));
+
+		mockMvc.perform(get("/vets.html").param("specialty", "radiology"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeExists("listVets"))
+			.andExpect(model().attribute("selectedSpecialty", "radiology"))
+			.andExpect(view().name("vets/vetList"));
+	}
+
+	@Test
+	void testShowVetListFilteredByNone() throws Exception {
+		given(this.vets.findByNoSpecialty(any(Pageable.class))).willReturn(new PageImpl<Vet>(List.of(james())));
+
+		mockMvc.perform(get("/vets.html").param("specialty", "none"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeExists("listVets"))
+			.andExpect(model().attribute("selectedSpecialty", "none"))
+			.andExpect(view().name("vets/vetList"));
+	}
+
+	@Test
+	void testShowVetListDefaultsToAll() throws Exception {
+		mockMvc.perform(get("/vets.html"))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("selectedSpecialty", "all"))
+			.andExpect(view().name("vets/vetList"));
 	}
 
 	@Test
