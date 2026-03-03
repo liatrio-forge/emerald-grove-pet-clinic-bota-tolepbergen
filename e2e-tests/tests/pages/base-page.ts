@@ -30,4 +30,14 @@ export abstract class BasePage {
   async screenshot(path: string): Promise<void> {
     await this.page.screenshot({ path, fullPage: true });
   }
+
+  async selectLanguage(language: string): Promise<void> {
+    const selector = this.page.locator('#languageSelector');
+    await selector.getByRole('link', { name: /globe/i }).or(selector.locator('.dropdown-toggle')).click();
+    await selector.getByRole('link', { name: language }).click();
+  }
+
+  currentLanguage(): Locator {
+    return this.page.locator('#languageSelector .dropdown-toggle');
+  }
 }

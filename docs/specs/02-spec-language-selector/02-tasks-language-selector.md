@@ -69,7 +69,7 @@
 - [x] 3.3 Run full test suite (`./mvnw test`) and verify all tests pass with no regressions
 - [x] 3.4 Start the app (`./mvnw spring-boot:run`), manually verify the dropdown works in browser, and capture screenshots for proof artifacts. Save screenshots to `docs/specs/02-spec-language-selector/02-proofs/`
 
-### [ ] 4.0 Add Playwright E2E tests for language switching and persistence
+### [x] 4.0 Add Playwright E2E tests for language switching and persistence
 
 #### 4.0 Proof Artifact(s)
 
@@ -78,7 +78,7 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Add language selector helpers to `base-page.ts`: add a method `selectLanguage(lang: string)` that clicks the language dropdown and selects the given language, and a method `currentLanguage()` that returns the currently displayed language name from the dropdown trigger
-- [ ] 4.2 Write Playwright E2E test (RED): create `e2e-tests/tests/features/language-selector.spec.ts`. Write a test that opens the homepage, switches to Spanish using the dropdown, asserts that the nav label changes (e.g., "Home" → "Inicio"), asserts the page heading changes to Spanish, then navigates to the Veterinarians page and asserts it's still in Spanish. Write a similar test for German. Run `cd e2e-tests && npm test -- --grep "language"` and confirm the tests fail
-- [ ] 4.3 Make E2E tests pass (GREEN): if tests fail due to selector issues, adjust the selectors or page object methods to match the actual HTML structure from task 2.2. Run the E2E tests again and confirm they pass
-- [ ] 4.4 Run the full E2E suite (`cd e2e-tests && npm test`) to verify no regressions in other tests
+- [x] 4.1 Add language selector helpers to `base-page.ts`: add a method `selectLanguage(lang: string)` that clicks the language dropdown and selects the given language, and a method `currentLanguage()` that returns the currently displayed language name from the dropdown trigger
+- [x] 4.2 Write Playwright E2E test (RED): create `e2e-tests/tests/features/language-selector.spec.ts`. Write a test that opens the homepage, switches to Spanish using the dropdown, asserts that the nav label changes (e.g., "Home" → "Inicio"), asserts the page heading changes to Spanish, then navigates to the Veterinarians page and asserts it's still in Spanish. Write a similar test for German. Run `cd e2e-tests && npm test -- --grep "language"` and confirm the tests fail
+- [x] 4.3 Make E2E tests pass (GREEN): if tests fail due to selector issues, adjust the selectors or page object methods to match the actual HTML structure from task 2.2. Run the E2E tests again and confirm they pass
+- [x] 4.4 Run the full E2E suite (`cd e2e-tests && npm test`) to verify no regressions in other tests
