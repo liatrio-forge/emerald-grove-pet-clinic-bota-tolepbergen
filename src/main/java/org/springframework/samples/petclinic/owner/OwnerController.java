@@ -115,6 +115,7 @@ class OwnerController {
 			String errorMsg = messageSource.getMessage("telephone.search.invalid", null,
 					LocaleContextHolder.getLocale());
 			model.addAttribute("telephoneError", errorMsg);
+			model.addAttribute("lastName", lastName);
 			model.addAttribute("telephone", trimmedTelephone);
 			model.addAttribute("city", trimmedCity);
 			return "owners/findOwners";
@@ -141,6 +142,7 @@ class OwnerController {
 			else {
 				result.rejectValue("lastName", "notFound", "not found");
 			}
+			model.addAttribute("lastName", lastName);
 			model.addAttribute("telephone", trimmedTelephone);
 			model.addAttribute("city", trimmedCity);
 			return "owners/findOwners";
