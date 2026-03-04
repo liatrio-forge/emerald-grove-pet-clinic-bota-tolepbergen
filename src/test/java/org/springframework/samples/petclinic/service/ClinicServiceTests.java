@@ -138,6 +138,25 @@ class ClinicServiceTests {
 	}
 
 	@Test
+	void shouldFindDuplicateOwnerByFirstNameLastNameAndTelephone() {
+		Optional<Owner> result = this.owners.findByFirstNameAndLastNameAndTelephone("George", "Franklin", "6085551023");
+		assertThat(result).isPresent();
+		assertThat(result.get().getFirstName()).isEqualTo("George");
+	}
+
+	@Test
+	void shouldNotFindDuplicateWhenTelephoneDiffers() {
+		Optional<Owner> result = this.owners.findByFirstNameAndLastNameAndTelephone("George", "Franklin", "0000000000");
+		assertThat(result).isEmpty();
+	}
+
+	@Test
+	void shouldFindDuplicateCaseInsensitive() {
+		Optional<Owner> result = this.owners.findByFirstNameAndLastNameAndTelephone("george", "franklin", "6085551023");
+		assertThat(result).isPresent();
+	}
+
+	@Test
 	void shouldFindSingleOwnerWithPet() {
 		Optional<Owner> optionalOwner = this.owners.findById(1);
 		assertThat(optionalOwner).isPresent();

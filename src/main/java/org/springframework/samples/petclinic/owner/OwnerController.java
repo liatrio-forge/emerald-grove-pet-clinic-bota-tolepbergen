@@ -86,6 +86,13 @@ class OwnerController {
 			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 		}
 
+		Optional<Owner> existing = this.owners.findByFirstNameAndLastNameAndTelephone(owner.getFirstName(),
+				owner.getLastName(), owner.getTelephone());
+		if (existing.isPresent()) {
+			result.rejectValue("telephone", "duplicate", "already exists");
+			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+		}
+
 		this.owners.save(owner);
 		redirectAttributes.addFlashAttribute("message", "New Owner Created");
 		return "redirect:/owners/" + owner.getId();
@@ -193,6 +200,13 @@ class OwnerController {
 			result.rejectValue("id", "mismatch", "The owner ID in the form does not match the URL.");
 			redirectAttributes.addFlashAttribute("error", "Owner ID mismatch. Please try again.");
 			return "redirect:/owners/{ownerId}/edit";
+		}
+
+		Optional<Owner> existing = this.owners.findByFirstNameAndLastNameAndTelephone(owner.getFirstName(),
+				owner.getLastName(), owner.getTelephone());
+		if (existing.isPresent() && !existing.get().getId().equals(ownerId)) {
+			result.rejectValue("telephone", "duplicate", "already exists");
+			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 		}
 
 		owner.setId(ownerId);

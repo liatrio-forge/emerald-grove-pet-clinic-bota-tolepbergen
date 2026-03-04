@@ -75,4 +75,8 @@ public interface OwnerRepository extends JpaRepository<Owner, Integer> {
 	 */
 	Optional<Owner> findById(Integer id);
 
+	@Query("SELECT o FROM Owner o WHERE LOWER(o.firstName) = LOWER(:firstName) AND LOWER(o.lastName) = LOWER(:lastName) AND o.telephone = :telephone")
+	Optional<Owner> findByFirstNameAndLastNameAndTelephone(@Param("firstName") String firstName,
+			@Param("lastName") String lastName, @Param("telephone") String telephone);
+
 }
