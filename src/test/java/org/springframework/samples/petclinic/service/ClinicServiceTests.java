@@ -99,6 +99,45 @@ class ClinicServiceTests {
 	}
 
 	@Test
+	void shouldReturnEmptyForLastNameDavisAndCityMadison() {
+		// Neither Davis is in Madison, so expect 0
+		Page<Owner> owners = this.owners.findByFilters("Davis", null, "Madison", pageable);
+		assertThat(owners).isEmpty();
+	}
+
+	@Test
+	void shouldReturnBettyForLastNameDavisAndCitySunPrairie() {
+		Page<Owner> owners = this.owners.findByFilters("Davis", null, "Sun Prairie", pageable);
+		assertThat(owners).hasSize(1);
+		assertThat(owners.getContent().get(0).getFirstName()).isEqualTo("Betty");
+	}
+
+	@Test
+	void shouldReturnAllForTelephonePrefix608555() {
+		Page<Owner> owners = this.owners.findByFilters("", "608555", null, pageable);
+		assertThat(owners).hasSize(10);
+	}
+
+	@Test
+	void shouldReturnTwoForTelephonePrefix6085551() {
+		Page<Owner> owners = this.owners.findByFilters("", "6085551", null, pageable);
+		assertThat(owners).hasSize(2);
+	}
+
+	@Test
+	void shouldReturnGeorgeForFranklinMadison608() {
+		Page<Owner> owners = this.owners.findByFilters("Franklin", "608", "Madison", pageable);
+		assertThat(owners).hasSize(1);
+		assertThat(owners.getContent().get(0).getFirstName()).isEqualTo("George");
+	}
+
+	@Test
+	void shouldReturnEmptyForFranklinWindsor() {
+		Page<Owner> owners = this.owners.findByFilters("Franklin", null, "Windsor", pageable);
+		assertThat(owners).isEmpty();
+	}
+
+	@Test
 	void shouldFindSingleOwnerWithPet() {
 		Optional<Owner> optionalOwner = this.owners.findById(1);
 		assertThat(optionalOwner).isPresent();

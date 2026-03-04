@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,8 +54,11 @@ class OwnerController {
 
 	private final OwnerRepository owners;
 
-	public OwnerController(OwnerRepository owners) {
+	private final MessageSource messageSource;
+
+	public OwnerController(OwnerRepository owners, MessageSource messageSource) {
 		this.owners = owners;
+		this.messageSource = messageSource;
 	}
 
 	@InitBinder
@@ -93,18 +98,53 @@ class OwnerController {
 
 	@GetMapping("/owners")
 	public String processFindForm(@RequestParam(defaultValue = "1") int page, Owner owner, BindingResult result,
+			@RequestParam(required = false) String telephone, @RequestParam(required = false) String city,
 			Model model) {
 		// allow parameterless GET request for /owners to return all records
 		String lastName = owner.getLastName();
-		if (lastName == null) {
-			lastName = ""; // empty string signifies broadest possible search
+		lastName = (lastName != null) ? lastName.trim() : ""; // empty string signifies
+																// broadest possible
+																// search
+
+		// trim whitespace from search inputs
+		String trimmedTelephone = (telephone != null) ? telephone.trim() : null;
+		String trimmedCity = (city != null) ? city.trim() : null;
+
+		// validate telephone is digits-only if provided
+		if (trimmedTelephone != null && !trimmedTelephone.isEmpty() && !trimmedTelephone.matches("\\d+")) {
+			String errorMsg = messageSource.getMessage("telephone.search.invalid", null,
+					LocaleContextHolder.getLocale());
+			model.addAttribute("telephoneError", errorMsg);
+			model.addAttribute("lastName", lastName);
+			model.addAttribute("telephone", trimmedTelephone);
+			model.addAttribute("city", trimmedCity);
+			return "owners/findOwners";
 		}
 
-		// find owners by last name
-		Page<Owner> ownersResults = findPaginatedForOwnersLastName(page, lastName);
+		// normalize empty strings to null for the query
+		String telParam = (trimmedTelephone != null && !trimmedTelephone.isEmpty()) ? trimmedTelephone : null;
+		String cityParam = (trimmedCity != null && !trimmedCity.isEmpty()) ? trimmedCity : null;
+
+		// guard invalid page numbers
+		if (page < 1) {
+			page = 1;
+		}
+
+		// find owners by filters
+		Page<Owner> ownersResults = findPaginatedForOwners(page, lastName, telParam, cityParam);
 		if (ownersResults.isEmpty()) {
 			// no owners found
-			result.rejectValue("lastName", "notFound", "not found");
+			if (telParam != null || cityParam != null) {
+				String noResultsMsg = messageSource.getMessage("notFound", null, "not found",
+						LocaleContextHolder.getLocale());
+				model.addAttribute("noResultsMessage", noResultsMsg);
+			}
+			else {
+				result.rejectValue("lastName", "notFound", "not found");
+			}
+			model.addAttribute("lastName", lastName);
+			model.addAttribute("telephone", trimmedTelephone);
+			model.addAttribute("city", trimmedCity);
 			return "owners/findOwners";
 		}
 
@@ -115,6 +155,9 @@ class OwnerController {
 		}
 
 		// multiple owners found
+		model.addAttribute("lastName", lastName);
+		model.addAttribute("telephone", trimmedTelephone);
+		model.addAttribute("city", trimmedCity);
 		return addPaginationModel(page, model, ownersResults);
 	}
 
@@ -127,10 +170,10 @@ class OwnerController {
 		return "owners/ownersList";
 	}
 
-	private Page<Owner> findPaginatedForOwnersLastName(int page, String lastname) {
+	private Page<Owner> findPaginatedForOwners(int page, String lastName, String telephone, String city) {
 		int pageSize = 5;
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
-		return owners.findByLastNameStartingWith(lastname, pageable);
+		return owners.findByFilters(lastName, telephone, city, pageable);
 	}
 
 	@GetMapping("/owners/{ownerId}/edit")

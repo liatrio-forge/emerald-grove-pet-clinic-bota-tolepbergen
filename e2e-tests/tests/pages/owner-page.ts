@@ -33,6 +33,24 @@ export class OwnerPage extends BasePage {
     await this.page.getByRole('button', { name: /Find Owner/i }).click();
   }
 
+  telephoneInput(): Locator {
+    return this.page.locator('input#telephone');
+  }
+
+  cityInput(): Locator {
+    return this.page.locator('input#city');
+  }
+
+  async searchByTelephone(telephone: string): Promise<void> {
+    await this.telephoneInput().fill(telephone);
+    await this.page.getByRole('button', { name: /Find Owner/i }).click();
+  }
+
+  async searchByCity(city: string): Promise<void> {
+    await this.cityInput().fill(city);
+    await this.page.getByRole('button', { name: /Find Owner/i }).click();
+  }
+
   async clickAddOwner(): Promise<void> {
     await this.page.getByRole('link', { name: /Add Owner/i }).click();
   }

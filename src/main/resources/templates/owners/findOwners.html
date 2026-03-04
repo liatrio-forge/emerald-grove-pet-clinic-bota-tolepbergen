@@ -25,12 +25,36 @@
           </div>
         </div>
         <div class="form-group">
+          <div class="control-group" id="telephoneGroup">
+            <label for="telephone" class="col-sm-2 control-label" th:text="#{telephone}">Telephone</label>
+            <div class="col-sm-10">
+              <input class="form-control" type="text" id="telephone" name="telephone"
+                th:value="${telephone}" size="30" maxlength="20" />
+              <div class="help-inline">
+                <p th:if="${telephoneError}" th:text="${telephoneError}">Error</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="control-group" id="cityGroup">
+            <label for="city" class="col-sm-2 control-label" th:text="#{city}">City</label>
+            <div class="col-sm-10">
+              <input class="form-control" type="text" id="city" name="city"
+                th:value="${city}" size="30" maxlength="80" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
           <div class="col-sm-offset-2 col-sm-10 liatrio-form-actions">
             <button type="submit" class="btn btn-primary" th:text="#{findOwner}">Find Owner</button>
             <a class="btn liatrio-btn-secondary" th:href="@{/owners/new}" th:text="#{addOwner}">Add Owner</a>
           </div>
         </div>
       </form>
+      <div th:if="${noResultsMessage}" class="alert alert-warning" role="alert">
+        <p th:text="${noResultsMessage}">No results found.</p>
+      </div>
     </div>
   </section>
 
