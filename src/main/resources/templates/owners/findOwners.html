@@ -52,6 +52,9 @@
           </div>
         </div>
       </form>
+      <div th:if="${noResultsMessage}" class="alert alert-warning" role="alert">
+        <p th:text="${noResultsMessage}">No results found.</p>
+      </div>
     </div>
   </section>
 

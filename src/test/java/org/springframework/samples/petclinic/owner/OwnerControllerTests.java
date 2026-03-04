@@ -167,6 +167,40 @@ class OwnerControllerTests {
 	}
 
 	@Test
+	void testProcessFindFormNoOwnersFoundByTelephoneDoesNotBindErrorToLastName() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of());
+		when(this.owners.findByFilters(anyString(), eq("999"), any(), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=1").param("telephone", "999"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeExists("noResultsMessage"))
+			.andExpect(view().name("owners/findOwners"));
+	}
+
+	@Test
+	void testProcessFindFormNoOwnersFoundByCityDoesNotBindErrorToLastName() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of());
+		when(this.owners.findByFilters(anyString(), any(), eq("Nowhere"), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=1").param("city", "Nowhere"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeExists("noResultsMessage"))
+			.andExpect(view().name("owners/findOwners"));
+	}
+
+	@Test
+	void testProcessFindFormWithZeroPageDefaultsToFirstPage() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george(), new Owner()));
+		when(this.owners.findByFilters(anyString(), any(), any(), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=0")).andExpect(status().isOk()).andExpect(view().name("owners/ownersList"));
+	}
+
+	@Test
+	void testProcessFindFormWithNegativePageDefaultsToFirstPage() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george(), new Owner()));
+		when(this.owners.findByFilters(anyString(), any(), any(), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=-5")).andExpect(status().isOk()).andExpect(view().name("owners/ownersList"));
+	}
+
+	@Test
 	void testProcessFindFormByTelephone() throws Exception {
 		Page<Owner> tasks = new PageImpl<>(List.of(george()));
 		when(this.owners.findByFilters(anyString(), eq("608"), any(), any(Pageable.class))).thenReturn(tasks);

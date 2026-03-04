@@ -124,11 +124,23 @@ class OwnerController {
 		String telParam = (trimmedTelephone != null && !trimmedTelephone.isEmpty()) ? trimmedTelephone : null;
 		String cityParam = (trimmedCity != null && !trimmedCity.isEmpty()) ? trimmedCity : null;
 
+		// guard invalid page numbers
+		if (page < 1) {
+			page = 1;
+		}
+
 		// find owners by filters
 		Page<Owner> ownersResults = findPaginatedForOwners(page, lastName, telParam, cityParam);
 		if (ownersResults.isEmpty()) {
 			// no owners found
-			result.rejectValue("lastName", "notFound", "not found");
+			if (telParam != null || cityParam != null) {
+				String noResultsMsg = messageSource.getMessage("notFound", null, "not found",
+						LocaleContextHolder.getLocale());
+				model.addAttribute("noResultsMessage", noResultsMsg);
+			}
+			else {
+				result.rejectValue("lastName", "notFound", "not found");
+			}
 			model.addAttribute("telephone", trimmedTelephone);
 			model.addAttribute("city", trimmedCity);
 			return "owners/findOwners";
