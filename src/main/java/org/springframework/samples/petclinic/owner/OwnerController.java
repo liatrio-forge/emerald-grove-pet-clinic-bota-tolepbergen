@@ -102,9 +102,9 @@ class OwnerController {
 			Model model) {
 		// allow parameterless GET request for /owners to return all records
 		String lastName = owner.getLastName();
-		if (lastName == null) {
-			lastName = ""; // empty string signifies broadest possible search
-		}
+		lastName = (lastName != null) ? lastName.trim() : ""; // empty string signifies
+																// broadest possible
+																// search
 
 		// trim whitespace from search inputs
 		String trimmedTelephone = (telephone != null) ? telephone.trim() : null;

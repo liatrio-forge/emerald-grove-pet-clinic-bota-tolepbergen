@@ -172,6 +172,7 @@ class OwnerControllerTests {
 		when(this.owners.findByFilters(anyString(), eq("999"), any(), any(Pageable.class))).thenReturn(tasks);
 		mockMvc.perform(get("/owners?page=1").param("telephone", "999"))
 			.andExpect(status().isOk())
+			.andExpect(model().attributeHasNoErrors("owner"))
 			.andExpect(model().attributeExists("noResultsMessage"))
 			.andExpect(view().name("owners/findOwners"));
 	}
@@ -182,6 +183,7 @@ class OwnerControllerTests {
 		when(this.owners.findByFilters(anyString(), any(), eq("Nowhere"), any(Pageable.class))).thenReturn(tasks);
 		mockMvc.perform(get("/owners?page=1").param("city", "Nowhere"))
 			.andExpect(status().isOk())
+			.andExpect(model().attributeHasNoErrors("owner"))
 			.andExpect(model().attributeExists("noResultsMessage"))
 			.andExpect(view().name("owners/findOwners"));
 	}
@@ -231,6 +233,15 @@ class OwnerControllerTests {
 		Page<Owner> tasks = new PageImpl<>(List.of(george()));
 		when(this.owners.findByFilters(anyString(), eq("608"), any(), any(Pageable.class))).thenReturn(tasks);
 		mockMvc.perform(get("/owners?page=1").param("telephone", " 608 "))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID));
+	}
+
+	@Test
+	void testProcessFindFormLastNameWithWhitespace() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george()));
+		when(this.owners.findByFilters(eq("Franklin"), any(), any(), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=1").param("lastName", " Franklin "))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID));
 	}
