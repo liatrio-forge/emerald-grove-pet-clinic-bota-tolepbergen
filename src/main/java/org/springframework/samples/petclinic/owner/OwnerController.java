@@ -106,27 +106,31 @@ class OwnerController {
 			lastName = ""; // empty string signifies broadest possible search
 		}
 
+		// trim whitespace from search inputs
+		String trimmedTelephone = (telephone != null) ? telephone.trim() : null;
+		String trimmedCity = (city != null) ? city.trim() : null;
+
 		// validate telephone is digits-only if provided
-		if (telephone != null && !telephone.isEmpty() && !telephone.matches("\\d+")) {
+		if (trimmedTelephone != null && !trimmedTelephone.isEmpty() && !trimmedTelephone.matches("\\d+")) {
 			String errorMsg = messageSource.getMessage("telephone.search.invalid", null,
 					LocaleContextHolder.getLocale());
 			model.addAttribute("telephoneError", errorMsg);
-			model.addAttribute("telephone", telephone);
-			model.addAttribute("city", city);
+			model.addAttribute("telephone", trimmedTelephone);
+			model.addAttribute("city", trimmedCity);
 			return "owners/findOwners";
 		}
 
 		// normalize empty strings to null for the query
-		String telParam = (telephone != null && !telephone.isEmpty()) ? telephone : null;
-		String cityParam = (city != null && !city.isEmpty()) ? city : null;
+		String telParam = (trimmedTelephone != null && !trimmedTelephone.isEmpty()) ? trimmedTelephone : null;
+		String cityParam = (trimmedCity != null && !trimmedCity.isEmpty()) ? trimmedCity : null;
 
 		// find owners by filters
 		Page<Owner> ownersResults = findPaginatedForOwners(page, lastName, telParam, cityParam);
 		if (ownersResults.isEmpty()) {
 			// no owners found
 			result.rejectValue("lastName", "notFound", "not found");
-			model.addAttribute("telephone", telephone);
-			model.addAttribute("city", city);
+			model.addAttribute("telephone", trimmedTelephone);
+			model.addAttribute("city", trimmedCity);
 			return "owners/findOwners";
 		}
 
@@ -138,8 +142,8 @@ class OwnerController {
 
 		// multiple owners found
 		model.addAttribute("lastName", lastName);
-		model.addAttribute("telephone", telephone);
-		model.addAttribute("city", city);
+		model.addAttribute("telephone", trimmedTelephone);
+		model.addAttribute("city", trimmedCity);
 		return addPaginationModel(page, model, ownersResults);
 	}
 

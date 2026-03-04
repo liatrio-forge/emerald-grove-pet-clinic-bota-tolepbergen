@@ -193,6 +193,24 @@ class OwnerControllerTests {
 	}
 
 	@Test
+	void testProcessFindFormTelephoneWithWhitespace() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george()));
+		when(this.owners.findByFilters(anyString(), eq("608"), any(), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=1").param("telephone", " 608 "))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID));
+	}
+
+	@Test
+	void testProcessFindFormCityWithWhitespace() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george(), new Owner()));
+		when(this.owners.findByFilters(anyString(), any(), eq("Madison"), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=1").param("city", " Madison "))
+			.andExpect(status().isOk())
+			.andExpect(view().name("owners/ownersList"));
+	}
+
+	@Test
 	void testInitUpdateOwnerForm() throws Exception {
 		mockMvc.perform(get("/owners/{ownerId}/edit", TEST_OWNER_ID))
 			.andExpect(status().isOk())
