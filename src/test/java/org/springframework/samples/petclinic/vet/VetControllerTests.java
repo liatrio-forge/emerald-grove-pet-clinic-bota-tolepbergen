@@ -142,6 +142,19 @@ class VetControllerTests {
 	}
 
 	@Test
+	void testShowVetListPreservesSpecialtyFilterAcrossPages() throws Exception {
+		given(this.vets.findBySpecialtyName(eq("radiology"), any(Pageable.class)))
+			.willReturn(new PageImpl<Vet>(List.of(helen())));
+
+		mockMvc.perform(get("/vets.html").param("page", "2").param("specialty", "radiology"))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("selectedSpecialty", "radiology"))
+			.andExpect(model().attribute("listVets", hasSize(1)))
+			.andExpect(model().attributeExists("currentPage"))
+			.andExpect(view().name("vets/vetList"));
+	}
+
+	@Test
 	void testShowResourcesVetList() throws Exception {
 		ResultActions actions = mockMvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk());
