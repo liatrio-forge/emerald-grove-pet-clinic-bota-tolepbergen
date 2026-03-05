@@ -1,11 +1,22 @@
 package org.springframework.samples.petclinic.owner;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 public class VisitValidator implements Validator {
+
+	private final Clock clock;
+
+	public VisitValidator() {
+		this(Clock.systemDefaultZone());
+	}
+
+	public VisitValidator(Clock clock) {
+		this.clock = clock;
+	}
 
 	@Override
 	public void validate(Object obj, Errors errors) {
@@ -17,7 +28,7 @@ public class VisitValidator implements Validator {
 			return;
 		}
 
-		if (date.isBefore(LocalDate.now())) {
+		if (date.isBefore(LocalDate.now(clock))) {
 			errors.rejectValue("date", "pastDate", "must not be in the past");
 		}
 	}

@@ -2,7 +2,10 @@ package org.springframework.samples.petclinic.owner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledInNativeImage;
@@ -12,12 +15,17 @@ import org.springframework.validation.Errors;
 @DisabledInNativeImage
 class VisitValidatorTests {
 
-	private final VisitValidator validator = new VisitValidator();
+	private static final LocalDate FIXED_DATE = LocalDate.of(2026, 3, 5);
+
+	private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_DATE.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+			ZoneId.systemDefault());
+
+	private final VisitValidator validator = new VisitValidator(FIXED_CLOCK);
 
 	@Test
 	void shouldAcceptVisitWithTodayDate() {
 		Visit visit = new Visit();
-		visit.setDate(LocalDate.now());
+		visit.setDate(FIXED_DATE);
 		visit.setDescription("Annual checkup");
 
 		Errors errors = new BeanPropertyBindingResult(visit, "visit");
@@ -29,7 +37,7 @@ class VisitValidatorTests {
 	@Test
 	void shouldAcceptVisitWithFutureDate() {
 		Visit visit = new Visit();
-		visit.setDate(LocalDate.now().plusDays(7));
+		visit.setDate(FIXED_DATE.plusDays(7));
 		visit.setDescription("Vaccination");
 
 		Errors errors = new BeanPropertyBindingResult(visit, "visit");
@@ -41,7 +49,7 @@ class VisitValidatorTests {
 	@Test
 	void shouldRejectVisitWithPastDate() {
 		Visit visit = new Visit();
-		visit.setDate(LocalDate.now().minusDays(1));
+		visit.setDate(FIXED_DATE.minusDays(1));
 		visit.setDescription("Past visit");
 
 		Errors errors = new BeanPropertyBindingResult(visit, "visit");
