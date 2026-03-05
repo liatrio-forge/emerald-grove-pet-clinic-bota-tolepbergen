@@ -218,6 +218,50 @@ class OwnerControllerTests {
 	}
 
 	@Test
+	void testProcessFindFormPreservesLastNameInPaginatedResults() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george(), new Owner()));
+		when(this.owners.findByFilters(eq("Franklin"), any(), any(), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=1").param("lastName", "Franklin"))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("lastName", "Franklin"))
+			.andExpect(view().name("owners/ownersList"));
+	}
+
+	@Test
+	void testProcessFindFormPreservesTelephoneInPaginatedResults() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george(), new Owner()));
+		when(this.owners.findByFilters(anyString(), eq("608"), any(), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=1").param("telephone", "608"))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("telephone", "608"))
+			.andExpect(view().name("owners/ownersList"));
+	}
+
+	@Test
+	void testProcessFindFormPreservesCityInPaginatedResults() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george(), new Owner()));
+		when(this.owners.findByFilters(anyString(), any(), eq("Madison"), any(Pageable.class))).thenReturn(tasks);
+		mockMvc.perform(get("/owners?page=1").param("city", "Madison"))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("city", "Madison"))
+			.andExpect(view().name("owners/ownersList"));
+	}
+
+	@Test
+	void testProcessFindFormPreservesAllFiltersInPaginatedResults() throws Exception {
+		Page<Owner> tasks = new PageImpl<>(List.of(george(), new Owner()));
+		when(this.owners.findByFilters(eq("Frank"), eq("608"), eq("Madison"), any(Pageable.class))).thenReturn(tasks);
+		mockMvc
+			.perform(
+					get("/owners?page=1").param("lastName", "Frank").param("telephone", "608").param("city", "Madison"))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("lastName", "Frank"))
+			.andExpect(model().attribute("telephone", "608"))
+			.andExpect(model().attribute("city", "Madison"))
+			.andExpect(view().name("owners/ownersList"));
+	}
+
+	@Test
 	void testProcessFindFormInvalidTelephone() throws Exception {
 		mockMvc.perform(get("/owners?page=1").param("telephone", "abc"))
 			.andExpect(status().isOk())
