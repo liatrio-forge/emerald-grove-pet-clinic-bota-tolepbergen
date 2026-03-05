@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS owners (
   city VARCHAR(80),
   telephone VARCHAR(20),
   INDEX(last_name),
-  UNIQUE KEY uc_owner_name_telephone (first_name, last_name, telephone)
+  UNIQUE KEY uc_owner_name_telephone ((LOWER(first_name)), (LOWER(last_name)), telephone)
 ) engine=InnoDB;
 
 CREATE TABLE IF NOT EXISTS pets (
