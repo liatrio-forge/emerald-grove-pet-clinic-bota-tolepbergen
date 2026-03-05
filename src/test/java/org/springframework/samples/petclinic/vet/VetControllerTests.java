@@ -149,6 +149,7 @@ class VetControllerTests {
 		mockMvc.perform(get("/vets.html").param("page", "2").param("specialty", "radiology"))
 			.andExpect(status().isOk())
 			.andExpect(model().attribute("selectedSpecialty", "radiology"))
+			.andExpect(model().attribute("listVets", hasSize(1)))
 			.andExpect(model().attributeExists("currentPage"))
 			.andExpect(view().name("vets/vetList"));
 	}

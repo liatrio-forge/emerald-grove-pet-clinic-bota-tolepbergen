@@ -253,7 +253,7 @@ class OwnerControllerTests {
 		when(this.owners.findByFilters(eq("Frank"), eq("608"), eq("Madison"), any(Pageable.class))).thenReturn(tasks);
 		mockMvc
 			.perform(
-					get("/owners?page=1").param("lastName", "Frank").param("telephone", "608").param("city", "Madison"))
+					get("/owners?page=2").param("lastName", "Frank").param("telephone", "608").param("city", "Madison"))
 			.andExpect(status().isOk())
 			.andExpect(model().attribute("lastName", "Frank"))
 			.andExpect(model().attribute("telephone", "608"))
