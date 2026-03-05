@@ -52,6 +52,11 @@ class VisitController {
 		dataBinder.setDisallowedFields("id");
 	}
 
+	@InitBinder("visit")
+	public void initVisitBinder(WebDataBinder dataBinder) {
+		dataBinder.addValidators(new VisitValidator());
+	}
+
 	/**
 	 * Called before each and every @RequestMapping annotated method. 2 goals: - Make sure
 	 * we always have fresh data - Since we do not use the session scope, make sure that
