@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.context.MessageSource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -86,7 +87,20 @@ class OwnerController {
 			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 		}
 
-		this.owners.save(owner);
+		Optional<Owner> existing = this.owners.findByFirstNameAndLastNameAndTelephone(owner.getFirstName(),
+				owner.getLastName(), owner.getTelephone());
+		if (existing.isPresent()) {
+			result.rejectValue("telephone", "duplicate", "already exists");
+			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+		}
+
+		try {
+			this.owners.save(owner);
+		}
+		catch (DataIntegrityViolationException ex) {
+			result.rejectValue("telephone", "duplicate", "already exists");
+			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+		}
 		redirectAttributes.addFlashAttribute("message", "New Owner Created");
 		return "redirect:/owners/" + owner.getId();
 	}
@@ -195,8 +209,21 @@ class OwnerController {
 			return "redirect:/owners/{ownerId}/edit";
 		}
 
+		Optional<Owner> existing = this.owners.findByFirstNameAndLastNameAndTelephone(owner.getFirstName(),
+				owner.getLastName(), owner.getTelephone());
+		if (existing.isPresent() && !existing.get().getId().equals(ownerId)) {
+			result.rejectValue("telephone", "duplicate", "already exists");
+			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+		}
+
 		owner.setId(ownerId);
-		this.owners.save(owner);
+		try {
+			this.owners.save(owner);
+		}
+		catch (DataIntegrityViolationException ex) {
+			result.rejectValue("telephone", "duplicate", "already exists");
+			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+		}
 		redirectAttributes.addFlashAttribute("message", "Owner Values Updated");
 		return "redirect:/owners/{ownerId}";
 	}

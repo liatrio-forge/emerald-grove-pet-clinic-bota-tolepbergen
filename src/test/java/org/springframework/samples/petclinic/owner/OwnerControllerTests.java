@@ -314,6 +314,63 @@ class OwnerControllerTests {
 	}
 
 	@Test
+	void testProcessCreationFormDuplicateOwner() throws Exception {
+		Owner existing = george();
+		given(this.owners.findByFirstNameAndLastNameAndTelephone("Joe", "Bloggs", "1316761638"))
+			.willReturn(Optional.of(existing));
+
+		mockMvc
+			.perform(post("/owners/new").param("firstName", "Joe")
+				.param("lastName", "Bloggs")
+				.param("address", "123 Caramel Street")
+				.param("city", "London")
+				.param("telephone", "1316761638"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeHasFieldErrors("owner", "telephone"))
+			.andExpect(model().attributeHasFieldErrorCode("owner", "telephone", "duplicate"))
+			.andExpect(view().name("owners/createOrUpdateOwnerForm"));
+	}
+
+	@Test
+	void testProcessUpdateOwnerFormDuplicateOwner() throws Exception {
+		Owner other = new Owner();
+		other.setId(99);
+		other.setFirstName("Joe");
+		other.setLastName("Bloggs");
+		other.setTelephone("1616291589");
+
+		given(this.owners.findByFirstNameAndLastNameAndTelephone("Joe", "Bloggs", "1616291589"))
+			.willReturn(Optional.of(other));
+
+		mockMvc
+			.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).param("firstName", "Joe")
+				.param("lastName", "Bloggs")
+				.param("address", "123 Caramel Street")
+				.param("city", "London")
+				.param("telephone", "1616291589"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeHasFieldErrors("owner", "telephone"))
+			.andExpect(model().attributeHasFieldErrorCode("owner", "telephone", "duplicate"))
+			.andExpect(view().name("owners/createOrUpdateOwnerForm"));
+	}
+
+	@Test
+	void testProcessUpdateOwnerFormSameOwnerNoDuplicate() throws Exception {
+		Owner george = george();
+		given(this.owners.findByFirstNameAndLastNameAndTelephone("Joe", "Bloggs", "1616291589"))
+			.willReturn(Optional.of(george));
+
+		mockMvc
+			.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).param("firstName", "Joe")
+				.param("lastName", "Bloggs")
+				.param("address", "123 Caramel Street")
+				.param("city", "London")
+				.param("telephone", "1616291589"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(view().name("redirect:/owners/{ownerId}"));
+	}
+
+	@Test
 	public void testProcessUpdateOwnerFormWithIdMismatch() throws Exception {
 		int pathOwnerId = 1;
 
