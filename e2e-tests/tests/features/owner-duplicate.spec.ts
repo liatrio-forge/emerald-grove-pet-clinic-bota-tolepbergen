@@ -23,7 +23,8 @@ test.describe('Duplicate Owner Prevention', () => {
     await ownerPage.fillOwnerForm(owner);
     await ownerPage.submitOwnerForm();
 
-    // Should stay on the form and show the duplicate error
-    await expect(page.locator('.form-group .text-danger, .help-inline')).toBeVisible();
+    // Should stay on the form and show the duplicate error on telephone
+    await expect(page.getByRole('button', { name: /add owner/i })).toBeVisible();
+    await expect(page.getByText(/already exists|already in use|duplicate/i)).toBeVisible();
   });
 });
