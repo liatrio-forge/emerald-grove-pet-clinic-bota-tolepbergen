@@ -94,9 +94,10 @@ class VisitControllerTests {
 
 	@Test
 	void testProcessNewVisitFormRejectsPastDate() throws Exception {
+		LocalDate today = LocalDate.now();
 		mockMvc
 			.perform(post("/owners/{ownerId}/pets/{petId}/visits/new", TEST_OWNER_ID, TEST_PET_ID)
-				.param("date", LocalDate.now().minusDays(1).toString())
+				.param("date", today.minusDays(1).toString())
 				.param("description", "Past visit"))
 			.andExpect(model().attributeHasFieldErrors("visit", "date"))
 			.andExpect(status().isOk())
@@ -105,9 +106,10 @@ class VisitControllerTests {
 
 	@Test
 	void testProcessNewVisitFormAcceptsTodayDate() throws Exception {
+		LocalDate today = LocalDate.now();
 		mockMvc
 			.perform(post("/owners/{ownerId}/pets/{petId}/visits/new", TEST_OWNER_ID, TEST_PET_ID)
-				.param("date", LocalDate.now().toString())
+				.param("date", today.toString())
 				.param("description", "Today visit"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(view().name("redirect:/owners/{ownerId}"));
@@ -115,9 +117,10 @@ class VisitControllerTests {
 
 	@Test
 	void testProcessNewVisitFormAcceptsFutureDate() throws Exception {
+		LocalDate today = LocalDate.now();
 		mockMvc
 			.perform(post("/owners/{ownerId}/pets/{petId}/visits/new", TEST_OWNER_ID, TEST_PET_ID)
-				.param("date", LocalDate.now().plusDays(7).toString())
+				.param("date", today.plusDays(7).toString())
 				.param("description", "Future visit"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(view().name("redirect:/owners/{ownerId}"));
