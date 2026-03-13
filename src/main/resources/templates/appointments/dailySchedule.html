@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'schedule')}">
+
+<body>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 th:text="#{schedule} + ' - ' + ${#temporals.format(date, 'MMMM d, yyyy')}">Schedule</h2>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a th:href="@{/appointments/schedule(date=${prevDate})}"
+         class="btn btn-outline-secondary btn-sm"
+         th:text="#{previous}" th:attr="aria-label=#{previous}"></a>
+      <a th:href="@{/appointments/schedule(date=${nextDate})}"
+         class="btn btn-outline-secondary btn-sm"
+         th:text="#{next}" th:attr="aria-label=#{next}"></a>
+      <form th:action="@{/appointments/schedule}" method="get" class="d-inline" id="date-picker-form">
+        <input type="date" name="date" id="schedule-date-input"
+               class="form-control form-control-sm d-inline-block"
+               style="width: auto;"
+               th:value="${date}"
+               aria-label="Select date" />
+      </form>
+    </div>
+  </div>
+
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <div class="btn-group" role="group" aria-label="Calendar view toggle">
+      <a th:href="@{/appointments/schedule(date=${date})}"
+         class="btn btn-primary btn-sm"
+         th:text="#{dailyView}" aria-current="page"></a>
+      <a th:href="@{/appointments/schedule/weekly(week=${date})}"
+         class="btn btn-outline-secondary btn-sm"
+         th:text="#{weeklyView}"></a>
+    </div>
+    <a th:href="@{/appointments/new}" class="btn btn-success btn-sm"
+       th:text="#{newAppointment}"></a>
+  </div>
+
+  <div th:if="${clinicClosed}" class="alert alert-warning" role="alert">
+    <span class="fa fa-exclamation-triangle" aria-hidden="true"></span>
+    <span th:text="#{clinicClosed}"></span>
+  </div>
+
+  <div th:unless="${clinicClosed}">
+    <div th:if="${vets == null or vets.isEmpty()}" class="alert alert-info" role="alert">
+      <span th:text="#{noVetsAvailable}"></span>
+    </div>
+
+    <div th:unless="${vets == null or vets.isEmpty()}" class="table-responsive">
+      <table class="table table-bordered calendar-grid" role="grid"
+             aria-label="Daily appointment schedule">
+        <thead>
+          <tr>
+            <th scope="col" th:text="#{time}"></th>
+            <th scope="col"
+                th:each="vet : ${vets}"
+                th:text="${vet.firstName + ' ' + vet.lastName}"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="slot : ${timeSlots}">
+            <th scope="row" th:text="${#temporals.format(slot, 'HH:mm')}"></th>
+            <th:block th:each="vet : ${vets}">
+              <td th:unless="${skippedSlots != null and skippedSlots.contains(vet.id + '-' + #temporals.format(slot, 'HH:mm'))}"
+                  th:with="key=${vet.id + '-' + #temporals.format(slot, 'HH:mm')},
+                           appt=${appointmentGrid != null ? appointmentGrid.get(key) : null},
+                           span=${slotSpans != null ? slotSpans.getOrDefault(key, 1) : 1}"
+                  th:rowspan="${span}"
+                  th:classappend="${appt != null ? 'appointment-' + appt.status.name().toLowerCase() : 'slot-empty'}"
+                  role="gridcell">
+                <a th:if="${appt != null}"
+                   th:href="@{/appointments/{id}(id=${appt.id})}"
+                   class="appointment-link"
+                   th:attr="aria-label=${appt.appointmentType.name + ' - ' + appt.pet.name + ' (' + appt.pet.owner.lastName + ')'}">
+                  <span class="appointment-type" th:text="${appt.appointmentType.name}"></span>
+                  <span class="appointment-pet" th:text="${appt.pet.name}"></span>
+                  <span class="appointment-owner" th:text="${appt.pet.owner.lastName}"></span>
+                </a>
+                <a th:if="${appt == null}"
+                   th:href="@{/appointments/new(vetId=${vet.id},date=${date},time=${#temporals.format(slot,'HH:mm')})}"
+                   class="slot-empty-link"
+                   th:attr="aria-label=#{bookSlot} + ' ' + ${vet.firstName} + ' ' + ${vet.lastName} + ' ' + #{at} + ' ' + ${#temporals.format(slot,'HH:mm')}">&nbsp;</a>
+              </td>
+            </th:block>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var dateInput = document.getElementById('schedule-date-input');
+      if (dateInput) {
+        dateInput.addEventListener('change', function() {
+          document.getElementById('date-picker-form').submit();
+        });
+      }
+    });
+  </script>
+
+</body>
+
+</html>

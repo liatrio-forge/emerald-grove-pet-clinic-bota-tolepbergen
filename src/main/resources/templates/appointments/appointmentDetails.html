@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'schedule')}">
+
+<body>
+
+  <section class="liatrio-section">
+    <div class="liatrio-table-card">
+      <div class="liatrio-card-header">
+        <h2 th:text="#{appointmentDetails}">Appointment Details</h2>
+      </div>
+
+      <div class="px-3 py-3">
+
+        <!-- Flash messages -->
+        <div th:if="${message}" class="alert alert-success" id="success-message" role="alert" aria-live="polite">
+          <span th:text="${message}"></span>
+        </div>
+        <div th:if="${error}" class="alert alert-danger" id="error-message" role="alert" aria-live="assertive">
+          <span th:text="${error}"></span>
+        </div>
+
+        <!-- Status Badge -->
+        <div class="mb-3">
+          <span class="badge"
+                th:classappend="${'badge-' + appointment.status.name().toLowerCase()}"
+                th:text="#{__${appointment.status.name().toLowerCase()}__}"
+                aria-label="Appointment status">
+            Scheduled
+          </span>
+        </div>
+
+        <!-- Appointment Information Table -->
+        <table class="table table-striped liatrio-table mt-3">
+          <tbody>
+            <tr>
+              <th scope="row" th:text="#{appointmentType}">Type</th>
+              <td th:text="${appointment.appointmentType.name + ' (' + appointment.appointmentType.defaultDurationMinutes + ' min)'}">
+                Checkup (30 min)
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" th:text="#{date}">Date</th>
+              <td th:text="${#temporals.format(appointment.appointmentDate, 'yyyy-MM-dd')}">
+                2026-03-05
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" th:text="#{startTime}">Start Time</th>
+              <td th:text="${#temporals.format(appointment.startTime, 'HH:mm')}">09:00</td>
+            </tr>
+            <tr>
+              <th scope="row" th:text="#{endTime}">End Time</th>
+              <td th:text="${#temporals.format(appointment.endTime, 'HH:mm')}">09:30</td>
+            </tr>
+            <tr>
+              <th scope="row" th:text="#{selectVet}">Veterinarian</th>
+              <td th:text="${appointment.vet.firstName + ' ' + appointment.vet.lastName}">James Carter</td>
+            </tr>
+            <tr>
+              <th scope="row" th:text="#{pet}">Pet</th>
+              <td th:text="${appointment.pet.name + ' (' + appointment.pet.type.name + ')'}">Leo (cat)</td>
+            </tr>
+            <tr>
+              <th scope="row" th:text="#{owner}">Owner</th>
+              <td>
+                <a th:href="@{/owners/{id}(id=${appointment.pet.owner.id})}"
+                   th:text="${appointment.pet.owner.firstName + ' ' + appointment.pet.owner.lastName}">
+                  George Franklin
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" th:text="#{appointmentNotes}">Notes</th>
+              <td th:text="${appointment.notes ?: '-'}">Annual checkup</td>
+            </tr>
+            <tr th:if="${appointment.status.name() == 'CANCELLED'}">
+              <th scope="row" th:text="#{cancelledAt}">Cancelled At</th>
+              <td th:text="${#temporals.format(appointment.cancelledAt, 'yyyy-MM-dd HH:mm')}">
+                2026-03-05 10:30
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" th:text="#{createdAt}">Created At</th>
+              <td th:text="${#temporals.format(appointment.createdAt, 'yyyy-MM-dd HH:mm')}">
+                2026-03-01 14:22
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Action Buttons -->
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+
+          <!-- Confirm: visible if canConfirm flag is set (SCHEDULED only) -->
+          <form th:if="${canConfirm}"
+                th:action="@{/appointments/{id}/confirm(id=${appointment.id})}"
+                method="post"
+                class="d-inline">
+            <button type="submit" class="btn btn-success" th:text="#{confirmAppointment}">Confirm</button>
+          </form>
+
+          <!-- Cancel: visible if canCancel flag is set (SCHEDULED or CONFIRMED) -->
+          <form th:if="${canCancel}"
+                th:action="@{/appointments/{id}/cancel(id=${appointment.id})}"
+                method="post"
+                class="d-inline">
+            <button type="submit" class="btn btn-danger" th:text="#{cancelAppointment}"
+                    th:onclick="|return confirm('[[#{confirmCancelMessage}]]')|">Cancel</button>
+          </form>
+
+          <!-- Complete: visible if canComplete flag is set (SCHEDULED or CONFIRMED) -->
+          <form th:if="${canComplete}"
+                th:action="@{/appointments/{id}/complete(id=${appointment.id})}"
+                method="post"
+                class="d-inline">
+            <button type="submit" class="btn btn-secondary" th:text="#{completeAppointment}">Complete</button>
+          </form>
+
+          <!-- Edit: visible if canEdit flag is set (SCHEDULED or CONFIRMED) -->
+          <a th:if="${canEdit}"
+             th:href="@{/appointments/{id}/edit(id=${appointment.id})}"
+             class="btn btn-outline-primary"
+             th:text="#{editAppointment}">Edit</a>
+
+          <!-- Back to Schedule -->
+          <a th:href="@{/appointments/schedule(date=${appointment.appointmentDate})}"
+             class="btn btn-outline-secondary"
+             th:text="#{backToSchedule}">Back to Schedule</a>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Hide flash messages after 5 seconds
+    (function () {
+      var ids = ['success-message', 'error-message'];
+      ids.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+          setTimeout(function () {
+            el.style.display = 'none';
+          }, 5000);
+        }
+      });
+    }());
+  </script>
+
+</body>
+
+</html>

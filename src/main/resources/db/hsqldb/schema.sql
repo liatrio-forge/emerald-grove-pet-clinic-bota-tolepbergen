@@ -1,3 +1,8 @@
+DROP TABLE appointments IF EXISTS;
+DROP TABLE appointment_types IF EXISTS;
+DROP TABLE vet_time_off IF EXISTS;
+DROP TABLE vet_schedules IF EXISTS;
+DROP TABLE clinic_schedule_config IF EXISTS;
 DROP TABLE vet_specialties IF EXISTS;
 DROP TABLE vets IF EXISTS;
 DROP TABLE specialties IF EXISTS;
@@ -63,3 +68,76 @@ CREATE TABLE visits (
 );
 ALTER TABLE visits ADD CONSTRAINT fk_visits_pets FOREIGN KEY (pet_id) REFERENCES pets (id);
 CREATE INDEX visits_pet_id ON visits (pet_id);
+
+CREATE TABLE appointment_types (
+  id                        INTEGER IDENTITY PRIMARY KEY,
+  name                      VARCHAR(80) NOT NULL,
+  default_duration_minutes  INTEGER NOT NULL,
+  specialty_id              INTEGER,
+  description               VARCHAR(255),
+  version                   INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT uk_appointment_types_name UNIQUE (name),
+  CONSTRAINT chk_appointment_type_duration CHECK (default_duration_minutes >= 1),
+  CONSTRAINT fk_appointment_types_specialties FOREIGN KEY (specialty_id) REFERENCES specialties (id)
+);
+CREATE INDEX idx_appointment_types_name ON appointment_types (name);
+
+CREATE TABLE appointments (
+  id                  INTEGER IDENTITY PRIMARY KEY,
+  version             INTEGER NOT NULL DEFAULT 0,
+  appointment_date    DATE NOT NULL,
+  start_time          TIME NOT NULL,
+  end_time            TIME NOT NULL,
+  status              VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED',
+  notes               VARCHAR(500),
+  pet_id              INTEGER NOT NULL,
+  vet_id              INTEGER NOT NULL,
+  appointment_type_id INTEGER NOT NULL,
+  created_at          TIMESTAMP NOT NULL,
+  cancelled_at        TIMESTAMP,
+  CONSTRAINT chk_appointment_time_range CHECK (start_time < end_time),
+  CONSTRAINT chk_appointment_status CHECK (status IN ('SCHEDULED','CONFIRMED','CANCELLED','COMPLETED')),
+  CONSTRAINT chk_appointment_version CHECK (version >= 0),
+  CONSTRAINT fk_appointments_pets FOREIGN KEY (pet_id) REFERENCES pets (id),
+  CONSTRAINT fk_appointments_vets FOREIGN KEY (vet_id) REFERENCES vets (id),
+  CONSTRAINT fk_appointments_types FOREIGN KEY (appointment_type_id) REFERENCES appointment_types (id)
+);
+CREATE INDEX idx_appointment_vet_date ON appointments (vet_id, appointment_date, start_time, end_time);
+CREATE INDEX idx_appointment_pet_date ON appointments (pet_id, appointment_date);
+CREATE INDEX idx_appointment_status ON appointments (status);
+
+CREATE TABLE clinic_schedule_config (
+  id                     INTEGER IDENTITY PRIMARY KEY,
+  day_of_week            INTEGER NOT NULL,
+  open_time              TIME NOT NULL,
+  close_time             TIME NOT NULL,
+  slot_duration_minutes  INTEGER NOT NULL DEFAULT 30,
+  is_open                BOOLEAN NOT NULL DEFAULT TRUE,
+  version                INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT uk_clinic_schedule_day UNIQUE (day_of_week),
+  CONSTRAINT chk_clinic_schedule_day_range CHECK (day_of_week >= 1 AND day_of_week <= 7),
+  CONSTRAINT chk_clinic_slot_duration_bounds CHECK (slot_duration_minutes >= 5),
+  CONSTRAINT chk_clinic_open_close CHECK (is_open = FALSE OR open_time < close_time)
+);
+
+CREATE TABLE vet_schedules (
+  id           INTEGER IDENTITY PRIMARY KEY,
+  vet_id       INTEGER NOT NULL,
+  day_of_week  INTEGER NOT NULL,
+  start_time   TIME NOT NULL,
+  end_time     TIME NOT NULL,
+  is_available BOOLEAN NOT NULL DEFAULT TRUE,
+  version      INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT uk_vet_schedule_day UNIQUE (vet_id, day_of_week),
+  CONSTRAINT fk_vet_schedules_vets FOREIGN KEY (vet_id) REFERENCES vets (id)
+);
+
+CREATE TABLE vet_time_off (
+  id       INTEGER IDENTITY PRIMARY KEY,
+  vet_id   INTEGER NOT NULL,
+  off_date DATE NOT NULL,
+  reason   VARCHAR(255),
+  version  INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT uk_vet_time_off UNIQUE (vet_id, off_date),
+  CONSTRAINT fk_vet_time_off_vets FOREIGN KEY (vet_id) REFERENCES vets (id)
+);

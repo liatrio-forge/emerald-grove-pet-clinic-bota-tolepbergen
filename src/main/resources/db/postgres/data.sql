@@ -52,9 +52,71 @@ INSERT INTO visits (pet_id, visit_date, description) SELECT 8, '2011-03-04', 'ra
 INSERT INTO visits (pet_id, visit_date, description) SELECT 8, '2009-06-04', 'neutered' WHERE NOT EXISTS (SELECT * FROM visits WHERE id=3);
 INSERT INTO visits (pet_id, visit_date, description) SELECT 7, '2008-09-04', 'spayed' WHERE NOT EXISTS (SELECT * FROM visits WHERE id=4);
 
+INSERT INTO appointment_types (name, default_duration_minutes, specialty_id, description, version) SELECT 'Checkup', 30, NULL, 'General wellness exam', 0 WHERE NOT EXISTS (SELECT * FROM appointment_types WHERE name='Checkup');
+INSERT INTO appointment_types (name, default_duration_minutes, specialty_id, description, version) SELECT 'Vaccination', 30, NULL, 'Standard vaccination visit', 0 WHERE NOT EXISTS (SELECT * FROM appointment_types WHERE name='Vaccination');
+INSERT INTO appointment_types (name, default_duration_minutes, specialty_id, description, version) SELECT 'Surgery', 90, 2, 'Surgical procedure', 0 WHERE NOT EXISTS (SELECT * FROM appointment_types WHERE name='Surgery');
+INSERT INTO appointment_types (name, default_duration_minutes, specialty_id, description, version) SELECT 'Dental Cleaning', 60, 3, 'Professional dental cleaning', 0 WHERE NOT EXISTS (SELECT * FROM appointment_types WHERE name='Dental Cleaning');
+INSERT INTO appointment_types (name, default_duration_minutes, specialty_id, description, version) SELECT 'X-Ray', 30, 1, 'Diagnostic imaging', 0 WHERE NOT EXISTS (SELECT * FROM appointment_types WHERE name='X-Ray');
+INSERT INTO appointment_types (name, default_duration_minutes, specialty_id, description, version) SELECT 'Emergency', 60, NULL, 'Emergency visit', 0 WHERE NOT EXISTS (SELECT * FROM appointment_types WHERE name='Emergency');
+
+INSERT INTO clinic_schedule_config (day_of_week, open_time, close_time, slot_duration_minutes, is_open, version) SELECT 1, '09:00:00', '17:00:00', 30, TRUE, 0 WHERE NOT EXISTS (SELECT * FROM clinic_schedule_config WHERE day_of_week=1);
+INSERT INTO clinic_schedule_config (day_of_week, open_time, close_time, slot_duration_minutes, is_open, version) SELECT 2, '09:00:00', '17:00:00', 30, TRUE, 0 WHERE NOT EXISTS (SELECT * FROM clinic_schedule_config WHERE day_of_week=2);
+INSERT INTO clinic_schedule_config (day_of_week, open_time, close_time, slot_duration_minutes, is_open, version) SELECT 3, '09:00:00', '17:00:00', 30, TRUE, 0 WHERE NOT EXISTS (SELECT * FROM clinic_schedule_config WHERE day_of_week=3);
+INSERT INTO clinic_schedule_config (day_of_week, open_time, close_time, slot_duration_minutes, is_open, version) SELECT 4, '09:00:00', '17:00:00', 30, TRUE, 0 WHERE NOT EXISTS (SELECT * FROM clinic_schedule_config WHERE day_of_week=4);
+INSERT INTO clinic_schedule_config (day_of_week, open_time, close_time, slot_duration_minutes, is_open, version) SELECT 5, '09:00:00', '17:00:00', 30, TRUE, 0 WHERE NOT EXISTS (SELECT * FROM clinic_schedule_config WHERE day_of_week=5);
+INSERT INTO clinic_schedule_config (day_of_week, open_time, close_time, slot_duration_minutes, is_open, version) SELECT 6, '09:00:00', '13:00:00', 30, TRUE, 0 WHERE NOT EXISTS (SELECT * FROM clinic_schedule_config WHERE day_of_week=6);
+INSERT INTO clinic_schedule_config (day_of_week, open_time, close_time, slot_duration_minutes, is_open, version) SELECT 7, '09:00:00', '13:00:00', 30, FALSE, 0 WHERE NOT EXISTS (SELECT * FROM clinic_schedule_config WHERE day_of_week=7);
+
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 1, 1, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=1 AND day_of_week=1);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 1, 2, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=1 AND day_of_week=2);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 1, 3, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=1 AND day_of_week=3);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 1, 4, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=1 AND day_of_week=4);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 1, 5, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=1 AND day_of_week=5);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 1, 6, '09:00:00', '13:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=1 AND day_of_week=6);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 2, 1, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=2 AND day_of_week=1);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 2, 2, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=2 AND day_of_week=2);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 2, 3, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=2 AND day_of_week=3);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 2, 4, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=2 AND day_of_week=4);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 2, 5, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=2 AND day_of_week=5);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 3, 1, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=3 AND day_of_week=1);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 3, 2, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=3 AND day_of_week=2);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 3, 3, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=3 AND day_of_week=3);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 3, 4, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=3 AND day_of_week=4);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 3, 5, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=3 AND day_of_week=5);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 3, 6, '09:00:00', '13:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=3 AND day_of_week=6);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 4, 1, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=4 AND day_of_week=1);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 4, 2, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=4 AND day_of_week=2);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 4, 3, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=4 AND day_of_week=3);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 4, 4, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=4 AND day_of_week=4);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 4, 5, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=4 AND day_of_week=5);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 5, 1, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=5 AND day_of_week=1);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 5, 2, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=5 AND day_of_week=2);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 5, 3, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=5 AND day_of_week=3);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 5, 4, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=5 AND day_of_week=4);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 5, 5, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=5 AND day_of_week=5);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 6, 1, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=6 AND day_of_week=1);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 6, 2, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=6 AND day_of_week=2);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 6, 3, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=6 AND day_of_week=3);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 6, 4, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=6 AND day_of_week=4);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 6, 5, '09:00:00', '17:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=6 AND day_of_week=5);
+INSERT INTO vet_schedules (vet_id, day_of_week, start_time, end_time, is_available, version) SELECT 6, 6, '09:00:00', '13:00:00', TRUE, 0 WHERE NOT EXISTS (SELECT * FROM vet_schedules WHERE vet_id=6 AND day_of_week=6);
+
+INSERT INTO vet_time_off (vet_id, off_date, reason, version) SELECT 2, '2026-04-06', 'Conference', 0 WHERE NOT EXISTS (SELECT * FROM vet_time_off WHERE vet_id=2 AND off_date='2026-04-06');
+INSERT INTO vet_time_off (vet_id, off_date, reason, version) SELECT 4, '2026-04-07', 'Vacation day', 0 WHERE NOT EXISTS (SELECT * FROM vet_time_off WHERE vet_id=4 AND off_date='2026-04-07');
+
+INSERT INTO appointments (appointment_date, start_time, end_time, status, pet_id, vet_id, appointment_type_id, created_at, version) SELECT '2026-04-06', '09:00:00', '09:30:00', 'SCHEDULED', 1, 1, 1, CURRENT_TIMESTAMP, 0 WHERE NOT EXISTS (SELECT * FROM appointments WHERE id=1);
+INSERT INTO appointments (appointment_date, start_time, end_time, status, pet_id, vet_id, appointment_type_id, created_at, version) SELECT '2026-04-06', '10:00:00', '10:30:00', 'CONFIRMED', 7, 1, 2, CURRENT_TIMESTAMP, 0 WHERE NOT EXISTS (SELECT * FROM appointments WHERE id=2);
+INSERT INTO appointments (appointment_date, start_time, end_time, status, pet_id, vet_id, appointment_type_id, created_at, version) SELECT '2026-04-07', '09:00:00', '10:30:00', 'SCHEDULED', 3, 3, 3, CURRENT_TIMESTAMP, 0 WHERE NOT EXISTS (SELECT * FROM appointments WHERE id=3);
+INSERT INTO appointments (appointment_date, start_time, end_time, status, pet_id, vet_id, appointment_type_id, created_at, version) SELECT '2026-04-07', '14:00:00', '14:30:00', 'SCHEDULED', 5, 1, 1, CURRENT_TIMESTAMP, 0 WHERE NOT EXISTS (SELECT * FROM appointments WHERE id=4);
+
 SELECT setval(pg_get_serial_sequence('vets', 'id'), COALESCE((SELECT MAX(id) FROM vets), 0));
 SELECT setval(pg_get_serial_sequence('specialties', 'id'), COALESCE((SELECT MAX(id) FROM specialties), 0));
 SELECT setval(pg_get_serial_sequence('types', 'id'), COALESCE((SELECT MAX(id) FROM types), 0));
 SELECT setval(pg_get_serial_sequence('owners', 'id'), COALESCE((SELECT MAX(id) FROM owners), 0));
 SELECT setval(pg_get_serial_sequence('pets', 'id'), COALESCE((SELECT MAX(id) FROM pets), 0));
 SELECT setval(pg_get_serial_sequence('visits', 'id'), COALESCE((SELECT MAX(id) FROM visits), 0));
+SELECT setval(pg_get_serial_sequence('appointment_types', 'id'), COALESCE((SELECT MAX(id) FROM appointment_types), 0));
+SELECT setval(pg_get_serial_sequence('appointments', 'id'), COALESCE((SELECT MAX(id) FROM appointments), 0));
+SELECT setval(pg_get_serial_sequence('clinic_schedule_config', 'id'), COALESCE((SELECT MAX(id) FROM clinic_schedule_config), 0));
+SELECT setval(pg_get_serial_sequence('vet_schedules', 'id'), COALESCE((SELECT MAX(id) FROM vet_schedules), 0));
+SELECT setval(pg_get_serial_sequence('vet_time_off', 'id'), COALESCE((SELECT MAX(id) FROM vet_time_off), 0));

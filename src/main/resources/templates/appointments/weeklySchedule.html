@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'schedule')}">
+
+<body>
+
+  <section class="liatrio-section">
+    <div class="liatrio-table-card">
+      <div class="liatrio-card-header">
+
+        <!-- Week navigation header -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2>
+            <span th:text="#{schedule}">Schedule</span>
+            -
+            <span th:text="#{weekOf}">Week of</span>
+            <span th:text="${#temporals.format(weekStart, 'MMMM d, yyyy')}">March 2, 2026</span>
+          </h2>
+          <div class="d-flex align-items-center gap-2">
+            <a th:href="@{/appointments/schedule/weekly(vetId=${vet.id},week=${prevWeek})}" class="btn btn-outline-secondary btn-sm" th:text="#{previous}" th:attr="aria-label=#{previous}">Prev</a>
+            <a th:href="@{/appointments/schedule/weekly(vetId=${vet.id},week=${nextWeek})}" class="btn btn-outline-secondary btn-sm" th:text="#{next}" th:attr="aria-label=#{next}">Next</a>
+          </div>
+        </div>
+
+        <!-- View toggle and vet selector -->
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+
+          <!-- View toggle -->
+          <div class="btn-group" role="group" aria-label="Calendar view toggle">
+            <a th:href="@{/appointments/schedule(date=${weekStart})}" class="btn btn-outline-secondary btn-sm" th:text="#{dailyView}">Daily View</a>
+            <a th:href="@{/appointments/schedule/weekly(vetId=${vet.id},week=${weekStart})}" class="btn btn-primary btn-sm" th:text="#{weeklyView}" aria-current="page">Weekly View</a>
+          </div>
+
+          <!-- Vet selector -->
+          <form th:action="@{/appointments/schedule/weekly}" method="get" class="d-inline-flex align-items-center gap-2">
+            <label for="vetSelect" th:text="#{selectVet}">Select Vet</label>
+            <select id="vetSelect" name="vetId" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+              <option th:each="v : ${allVets}" th:value="${v.id}" th:text="${v.firstName + ' ' + v.lastName}" th:selected="${v.id == vet.id}">Dr. Carter</option>
+            </select>
+            <input type="hidden" name="week" th:value="${weekStart}" />
+          </form>
+
+        </div>
+
+      </div>
+
+      <div class="px-3 table-responsive">
+
+        <!-- Weekly calendar grid -->
+        <table class="table table-bordered calendar-grid calendar-weekly" role="grid" aria-label="Weekly appointment schedule">
+          <thead>
+            <tr>
+              <th scope="col" th:text="#{time}">Time</th>
+              <th scope="col" th:each="day : ${days}"
+                  th:classappend="${!day.isOpen ? 'day-closed' : (day.isTimeOff ? 'day-timeoff' : '')}">
+                <div th:text="${day.dayOfWeek.getDisplayName(textStyleShort, #locale)}">Mon</div>
+                <div class="text-muted small" th:text="${#temporals.format(day.date, 'M/d')}">3/2</div>
+                <div th:if="${day.isTimeOff}" class="badge bg-secondary" th:text="#{timeOff}">Time Off</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="slot : ${timeSlots}">
+              <th scope="row" th:text="${#temporals.format(slot, 'HH:mm')}">09:00</th>
+              <th:block th:each="day : ${days}">
+                <!-- Clinic-closed day: blocked cell -->
+                <td th:if="${!day.isOpen}"
+                    th:unless="${skippedSlots.contains(day.date + '-' + #temporals.format(slot, 'HH:mm'))}"
+                    class="slot-blocked"
+                    role="gridcell"
+                    th:attr="aria-label=#{clinicClosed}">
+                </td>
+                <!-- Time-off day: blocked cell -->
+                <td th:if="${day.isOpen and day.isTimeOff}"
+                    th:unless="${skippedSlots.contains(day.date + '-' + #temporals.format(slot, 'HH:mm'))}"
+                    class="slot-blocked"
+                    role="gridcell"
+                    th:attr="aria-label=#{timeOff}">
+                </td>
+                <!-- Open day: appointment or empty bookable slot -->
+                <td th:if="${day.isOpen and !day.isTimeOff}"
+                    th:unless="${skippedSlots.contains(day.date + '-' + #temporals.format(slot, 'HH:mm'))}"
+                    th:with="key=${day.date + '-' + #temporals.format(slot, 'HH:mm')},
+                             appt=${appointmentGrid.get(key)},
+                             span=${slotSpans.getOrDefault(key, 1)}"
+                    th:rowspan="${span}"
+                    th:classappend="${appt != null ? 'appointment-' + appt.status.name().toLowerCase() : 'slot-empty'}"
+                    role="gridcell">
+                  <!-- Booked slot: link to appointment detail -->
+                  <a th:if="${appt != null}"
+                     th:href="@{/appointments/{id}(id=${appt.id})}"
+                     class="appointment-link"
+                     th:attr="aria-label=${appt.appointmentType.name + ' - ' + appt.pet.name}">
+                    <span class="appointment-type" th:text="${appt.appointmentType.name}">Checkup</span>
+                    <span class="appointment-pet" th:text="${appt.pet.name}">Leo</span>
+                  </a>
+                  <!-- Empty slot: link to booking form with pre-filled params -->
+                  <a th:if="${appt == null}"
+                     th:href="@{/appointments/new(vetId=${vet.id},date=${day.date},time=${#temporals.format(slot,'HH:mm')})}"
+                     class="slot-empty-link"
+                     th:attr="aria-label=#{bookSlot} + ' ' + ${#temporals.format(slot,'HH:mm')} + ' ' + ${day.dayOfWeek.getDisplayName(textStyleShort, #locale)}">
+                    &nbsp;
+                  </a>
+                </td>
+              </th:block>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </section>
+
+</body>
+
+</html>

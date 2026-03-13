@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'vets')}">
+
+<body>
+
+  <section class="liatrio-section">
+    <div class="liatrio-table-card">
+      <div class="liatrio-card-header">
+        <h2>
+          <span th:text="#{vetSchedule}">Schedule for</span>
+          <span th:text="${vet.firstName + ' ' + vet.lastName}">James Carter</span>
+        </h2>
+      </div>
+
+      <div class="px-3">
+
+        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <!-- Weekly Schedule Form -->
+        <form th:action="@{/vets/{vetId}/schedule(vetId=${vet.id})}" method="post">
+          <table class="table table-striped liatrio-table">
+            <thead>
+              <tr>
+                <th th:text="#{day}">Day</th>
+                <th th:text="#{startTime}">Start Time</th>
+                <th th:text="#{endTime}">End Time</th>
+                <th th:text="#{available}">Available</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="schedule : ${schedules}">
+                <td th:text="${schedule.dayOfWeekEnum.getDisplayName(textStyleFull, #locale)}">
+                  Monday
+                </td>
+                <td>
+                  <input type="time" class="form-control form-control-sm"
+                         th:name="${'day_' + schedule.dayOfWeek + '_start'}"
+                         th:value="${#temporals.format(schedule.startTime, 'HH:mm')}"
+                         th:aria-label="#{startTime}" />
+                </td>
+                <td>
+                  <input type="time" class="form-control form-control-sm"
+                         th:name="${'day_' + schedule.dayOfWeek + '_end'}"
+                         th:value="${#temporals.format(schedule.endTime, 'HH:mm')}"
+                         th:aria-label="#{endTime}" />
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input"
+                           th:name="${'day_' + schedule.dayOfWeek + '_available'}"
+                           th:value="true"
+                           th:checked="${schedule.isAvailable}"
+                           th:aria-label="#{available}" />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <button type="submit" class="btn btn-primary"
+                  th:text="#{saveSchedule}">Save Schedule</button>
+          <a th:href="@{/vets.html}" class="btn btn-outline-secondary ms-2"
+             th:text="#{backToVets}">Back to Veterinarians</a>
+        </form>
+
+        <!-- Time Off Section -->
+        <h3 class="mt-4" th:text="#{timeOffTitle}">Time Off</h3>
+
+        <div th:if="${conflictWarning}" class="alert alert-warning" th:text="${conflictWarning}"></div>
+
+        <table th:if="${not #lists.isEmpty(timeOffs)}" class="table table-striped liatrio-table">
+          <thead>
+            <tr>
+              <th th:text="#{date}">Date</th>
+              <th th:text="#{reason}">Reason</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="to : ${timeOffs}">
+              <td th:text="${#temporals.format(to.date, 'yyyy-MM-dd')}">2026-03-10</td>
+              <td th:text="${to.reason ?: '-'}">Vacation</td>
+              <td>
+                <form th:action="@{/vets/{vetId}/timeoff/{toId}/delete(vetId=${vet.id},toId=${to.id})}"
+                      method="post" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger"
+                          th:text="#{remove}">Remove</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p th:if="${#lists.isEmpty(timeOffs)}" class="text-muted" th:text="#{noTimeOff}">
+          No time off scheduled.
+        </p>
+
+        <!-- Add Time Off Form -->
+        <form th:action="@{/vets/{vetId}/timeoff(vetId=${vet.id})}" method="post"
+              class="d-flex align-items-end gap-2 mt-3">
+          <div>
+            <label for="offDate" th:text="#{date}">Date</label>
+            <input type="date" id="offDate" name="date" class="form-control"
+                   th:min="${today}"
+                   required th:aria-label="#{date}" />
+          </div>
+          <div>
+            <label for="reason" th:text="#{reason}">Reason</label>
+            <input type="text" id="reason" name="reason" class="form-control"
+                   maxlength="255" th:aria-label="#{reason}" />
+          </div>
+          <button type="submit" class="btn btn-primary"
+                  th:text="#{addTimeOff}">Add Time Off</button>
+        </form>
+
+      </div>
+    </div>
+  </section>
+
+</body>
+
+</html>

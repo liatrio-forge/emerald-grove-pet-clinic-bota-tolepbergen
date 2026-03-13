@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'schedule')}">
+
+<body>
+
+  <section class="liatrio-section">
+    <div class="liatrio-table-card">
+      <div class="liatrio-card-header">
+        <h2 th:text="#{editAppointment}">Edit Appointment</h2>
+        <span class="badge ms-2"
+              th:classappend="${'badge-' + appointment.status.name().toLowerCase()}"
+              th:text="#{__${appointment.status.name().toLowerCase()}__}">
+          Scheduled
+        </span>
+      </div>
+
+      <div class="px-3 py-3">
+
+        <form th:object="${appointment}"
+              th:action="@{/appointments/{id}/edit(id=${appointment.id})}"
+              method="post" class="form-horizontal mt-3" id="appointmentForm">
+
+          <!-- Global errors (conflict messages) -->
+          <div th:if="${conflicts != null and !#lists.isEmpty(conflicts)}" class="alert alert-danger" role="alert" aria-live="assertive">
+            <ul class="list-unstyled mb-0">
+              <li th:each="conflict : ${conflicts}" th:text="${conflict.message}">Conflict error</li>
+            </ul>
+          </div>
+
+          <!-- Owner (read-only, link to owner detail) -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" th:text="#{owner}">Owner</label>
+            <div class="col-sm-10">
+              <p class="form-control-plaintext">
+                <a th:href="@{/owners/{id}(id=${appointment.pet.owner.id})}"
+                   th:text="${appointment.pet.owner.firstName + ' ' + appointment.pet.owner.lastName}">
+                  George Franklin
+                </a>
+              </p>
+            </div>
+          </div>
+
+          <!-- Pet (read-only) -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" th:text="#{pet}">Pet</label>
+            <div class="col-sm-10">
+              <p class="form-control-plaintext"
+                 th:text="${appointment.pet.name + ' (' + appointment.pet.type.name + ')'}">
+                Leo (cat)
+              </p>
+            </div>
+          </div>
+
+          <!-- Appointment Type (read-only) -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" th:text="#{appointmentType}">Appointment Type</label>
+            <div class="col-sm-10">
+              <p class="form-control-plaintext"
+                 th:text="${appointment.appointmentType.name + ' (' + appointment.appointmentType.defaultDurationMinutes + ' min)'}">
+                Checkup (30 min)
+              </p>
+              <!-- Hidden fields to preserve values on submit -->
+              <input type="hidden" name="appointmentTypeId" th:value="${appointment.appointmentType.id}" />
+              <input type="hidden" name="petId" th:value="${appointment.pet.id}" />
+            </div>
+          </div>
+
+          <!-- Veterinarian (editable) -->
+          <div class="form-group">
+            <label for="vetSelect" class="col-sm-2 control-label" th:text="#{selectVet}">Veterinarian</label>
+            <div class="col-sm-10">
+              <select id="vetSelect" name="vetId" class="form-select"
+                      th:attr="aria-label=#{selectVet}" required>
+                <option th:each="v : ${vets}"
+                        th:value="${v.id}"
+                        th:text="${v.firstName + ' ' + v.lastName}"
+                        th:selected="${v.id == appointment.vet.id}">
+                  James Carter
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Date (editable, min=today) -->
+          <div class="form-group">
+            <label for="appointmentDate" class="col-sm-2 control-label" th:text="#{date}">Date</label>
+            <div class="col-sm-10">
+              <input type="date" id="appointmentDate" name="date"
+                     class="form-control"
+                     th:value="*{appointmentDate}"
+                     th:min="${today}"
+                     th:attr="aria-label=#{date}" required />
+            </div>
+          </div>
+
+          <!-- Start Time (editable, dynamically populated via AJAX from appointment-form.js) -->
+          <div class="form-group">
+            <label for="startTimeSelect" class="col-sm-2 control-label" th:text="#{startTime}">Start Time</label>
+            <div class="col-sm-10">
+              <select id="startTimeSelect" name="startTime" class="form-select"
+                      th:attr="aria-label=#{startTime}" required>
+                <option th:each="slot : ${timeSlots}"
+                        th:value="${slot}"
+                        th:text="${slot}"
+                        th:selected="${slot == #temporals.format(appointment.startTime, 'HH:mm')}">
+                  09:00
+                </option>
+              </select>
+              <small id="noSlotsMessage" class="text-muted d-none" th:text="#{noSlotsAvailable}">
+                No available slots for this vet and date.
+              </small>
+            </div>
+          </div>
+
+          <!-- Notes (editable) -->
+          <div class="form-group">
+            <label for="notes" class="col-sm-2 control-label" th:text="#{appointmentNotes}">Notes</label>
+            <div class="col-sm-10">
+              <textarea id="notes" name="notes" class="form-control"
+                        th:text="*{notes}" rows="3" maxlength="500"
+                        th:attr="aria-label=#{appointmentNotes}"></textarea>
+            </div>
+          </div>
+
+          <!-- Submit and Cancel -->
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button type="submit" class="btn btn-primary"
+                      th:text="#{updateAppointment}">Update Appointment</button>
+              <a th:href="@{/appointments/{id}(id=${appointment.id})}"
+                 class="btn btn-outline-secondary ms-2"
+                 th:text="#{cancel}">Cancel</a>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </section>
+
+  <script th:src="@{/resources/js/appointment-form.js}"></script>
+
+</body>
+
+</html>
