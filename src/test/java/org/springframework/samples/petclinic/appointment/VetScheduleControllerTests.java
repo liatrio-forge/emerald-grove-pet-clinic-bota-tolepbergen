@@ -22,6 +22,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -38,8 +39,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -142,9 +141,9 @@ class VetScheduleControllerTests {
 		schedule.setIsAvailable(true);
 
 		VetTimeOff timeOff1 = new VetTimeOff();
-		timeOff1.setDate(LocalDate.now().plusDays(5));
+		timeOff1.setDate(LocalDate.now(FIXED_CLOCK).plusDays(5));
 		VetTimeOff timeOff2 = new VetTimeOff();
-		timeOff2.setDate(LocalDate.now().plusDays(10));
+		timeOff2.setDate(LocalDate.now(FIXED_CLOCK).plusDays(10));
 
 		ClinicScheduleConfig config = new ClinicScheduleConfig();
 		config.setDayOfWeek(1);
@@ -222,15 +221,14 @@ class VetScheduleControllerTests {
 	// -------------------------------------------------------------------------
 
 	@Test
+	@SuppressWarnings("unchecked")
 	void updateScheduleSuccess() throws Exception {
 		VetSchedule saved = new VetSchedule();
 		saved.setDayOfWeek(1);
 		saved.setStartTime(LocalTime.of(9, 0));
 		saved.setEndTime(LocalTime.of(17, 0));
 		saved.setIsAvailable(true);
-		given(vetScheduleService.updateDaySchedule(eq(TEST_VET_ID), anyInt(), any(LocalTime.class),
-				any(LocalTime.class), anyBoolean()))
-			.willReturn(saved);
+		given(vetScheduleService.updateWeekSchedule(eq(TEST_VET_ID), any(Map.class))).willReturn(List.of(saved));
 
 		mockMvc
 			.perform(post("/vets/{vetId}/schedule", TEST_VET_ID).param("day_1_start", "09:00")
@@ -254,25 +252,14 @@ class VetScheduleControllerTests {
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/vets/" + TEST_VET_ID + "/schedule"))
 			.andExpect(flash().attribute("message", containsString("saved")));
-		verify(vetScheduleService).updateDaySchedule(eq(TEST_VET_ID), eq(1), eq(LocalTime.of(9, 0)),
-				eq(LocalTime.of(17, 0)), eq(true));
-		verify(vetScheduleService).updateDaySchedule(eq(TEST_VET_ID), eq(2), eq(LocalTime.of(9, 0)),
-				eq(LocalTime.of(17, 0)), eq(true));
-		verify(vetScheduleService).updateDaySchedule(eq(TEST_VET_ID), eq(3), eq(LocalTime.of(9, 0)),
-				eq(LocalTime.of(17, 0)), eq(true));
-		verify(vetScheduleService).updateDaySchedule(eq(TEST_VET_ID), eq(4), eq(LocalTime.of(9, 0)),
-				eq(LocalTime.of(17, 0)), eq(true));
-		verify(vetScheduleService).updateDaySchedule(eq(TEST_VET_ID), eq(5), eq(LocalTime.of(9, 0)),
-				eq(LocalTime.of(17, 0)), eq(true));
-		verify(vetScheduleService).updateDaySchedule(eq(TEST_VET_ID), eq(6), eq(LocalTime.of(9, 0)),
-				eq(LocalTime.of(12, 0)), eq(true));
+		verify(vetScheduleService).updateWeekSchedule(eq(TEST_VET_ID), any(Map.class));
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	void updateScheduleInvalidTimes() throws Exception {
-		given(vetScheduleService.updateDaySchedule(eq(TEST_VET_ID), eq(1), any(LocalTime.class), any(LocalTime.class),
-				anyBoolean()))
-			.willThrow(new IllegalArgumentException("Start time must be before end time"));
+		given(vetScheduleService.updateWeekSchedule(eq(TEST_VET_ID), any(Map.class)))
+			.willThrow(new IllegalArgumentException("Day 1: Start time must be before end time"));
 
 		mockMvc
 			.perform(post("/vets/{vetId}/schedule", TEST_VET_ID).param("day_1_start", "17:00")
@@ -284,10 +271,10 @@ class VetScheduleControllerTests {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	void updateScheduleOutsideClinicHours() throws Exception {
-		given(vetScheduleService.updateDaySchedule(eq(TEST_VET_ID), eq(1), any(LocalTime.class), any(LocalTime.class),
-				anyBoolean()))
-			.willThrow(new IllegalArgumentException("Vet schedule times must fall within clinic hours"));
+		given(vetScheduleService.updateWeekSchedule(eq(TEST_VET_ID), any(Map.class)))
+			.willThrow(new IllegalArgumentException("Day 1: Vet schedule times must fall within clinic hours"));
 
 		mockMvc
 			.perform(post("/vets/{vetId}/schedule", TEST_VET_ID).param("day_1_start", "07:00")

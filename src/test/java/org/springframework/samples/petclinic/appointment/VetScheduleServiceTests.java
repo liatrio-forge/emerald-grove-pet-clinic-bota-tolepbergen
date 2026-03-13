@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -239,6 +240,37 @@ class VetScheduleServiceTests {
 				true);
 
 		assertThat(result.getStartTime()).isEqualTo(LocalTime.of(10, 0));
+	}
+
+	// --- updateWeekSchedule ---
+
+	@Test
+	void updateWeekScheduleSavesAllDaysAtomically() {
+		given(vetRepo.findById(VET_ID)).willReturn(Optional.of(vet));
+		given(clinicConfigRepo.findByDayOfWeek(1)).willReturn(Optional.of(mondayConfig));
+		given(vetScheduleRepo.findByVetIdAndDayOfWeek(VET_ID, 1)).willReturn(Optional.empty());
+		given(vetScheduleRepo.saveAll(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+		Map<Integer, VetScheduleService.DayScheduleRequest> daySchedules = Map.of(1,
+				new VetScheduleService.DayScheduleRequest(LocalTime.of(9, 0), LocalTime.of(17, 0), true));
+
+		List<VetSchedule> result = vetScheduleService.updateWeekSchedule(VET_ID, daySchedules);
+
+		assertThat(result).hasSize(1);
+		verify(vetScheduleRepo).saveAll(any());
+	}
+
+	@Test
+	void updateWeekScheduleWithInvalidTimeThrowsWithoutSaving() {
+		given(vetRepo.findById(VET_ID)).willReturn(Optional.of(vet));
+
+		Map<Integer, VetScheduleService.DayScheduleRequest> daySchedules = Map.of(1,
+				new VetScheduleService.DayScheduleRequest(LocalTime.of(17, 0), LocalTime.of(9, 0), true));
+
+		assertThatThrownBy(() -> vetScheduleService.updateWeekSchedule(VET_ID, daySchedules))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("Start time must be before end time");
+		verify(vetScheduleRepo, never()).saveAll(any());
 	}
 
 	// --- addTimeOff ---

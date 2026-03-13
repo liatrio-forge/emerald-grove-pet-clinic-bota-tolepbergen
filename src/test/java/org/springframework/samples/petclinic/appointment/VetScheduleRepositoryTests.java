@@ -88,9 +88,17 @@ class VetScheduleRepositoryTests {
 	}
 
 	@Test
+	@Transactional
 	void shouldLoadVetNameWithoutLazyInitializationException() {
 		List<VetSchedule> schedules = vetScheduleRepository.findByVetId(1);
 		assertThat(schedules).isNotEmpty();
+
+		// Clear the persistence context to evict all cached entities.
+		// Accessing vet.firstName after this would throw LazyInitializationException
+		// if the vet association were lazily loaded. The fact that it succeeds confirms
+		// the repository's JOIN FETCH eagerly loads the vet association.
+		entityManager.clear();
+
 		// Access vet name - should not throw LazyInitializationException
 		String firstName = schedules.get(0).getVet().getFirstName();
 		assertThat(firstName).isEqualTo("James");

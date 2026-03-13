@@ -22,7 +22,21 @@ package org.springframework.samples.petclinic.appointment;
  * The {@code conflictingAppointment} field is nullable -- it is only set for overlap
  * conflicts ({@link ConflictType#VET_OVERLAP}, {@link ConflictType#PET_OVERLAP},
  * {@link ConflictType#OWNER_OVERLAP}).
+ *
+ * <p>
+ * The {@code messageCode} field holds an i18n message key so the UI/controller layer can
+ * resolve the human-readable text via a {@code MessageSource} instead of relying on the
+ * English {@code message} fallback.
  */
-public record SchedulingConflict(ConflictType type, String message, Appointment conflictingAppointment) {
+public record SchedulingConflict(ConflictType type, String message, Appointment conflictingAppointment,
+		String messageCode) {
+
+	/**
+	 * Compact constructor for backwards compatibility. Creates a conflict with a
+	 * {@code null} message code (English-only fallback).
+	 */
+	public SchedulingConflict(ConflictType type, String message, Appointment conflictingAppointment) {
+		this(type, message, conflictingAppointment, null);
+	}
 
 }

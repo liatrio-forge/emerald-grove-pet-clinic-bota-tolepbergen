@@ -129,6 +129,8 @@ CREATE TABLE vet_schedules (
   is_available BOOLEAN NOT NULL DEFAULT TRUE,
   version      INTEGER NOT NULL DEFAULT 0,
   CONSTRAINT uk_vet_schedule_day UNIQUE (vet_id, day_of_week),
+  CONSTRAINT chk_vet_schedule_day_range CHECK (day_of_week >= 1 AND day_of_week <= 7),
+  CONSTRAINT chk_vet_schedule_time_range CHECK (start_time < end_time),
   CONSTRAINT fk_vet_schedules_vets FOREIGN KEY (vet_id) REFERENCES vets (id)
 );
 

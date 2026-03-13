@@ -107,7 +107,9 @@ CREATE TABLE IF NOT EXISTS vet_schedules (
   end_time     TIME NOT NULL,
   is_available BOOLEAN NOT NULL DEFAULT TRUE,
   version      INT NOT NULL DEFAULT 0,
-  CONSTRAINT uk_vet_schedule_day UNIQUE (vet_id, day_of_week)
+  CONSTRAINT uk_vet_schedule_day UNIQUE (vet_id, day_of_week),
+  CONSTRAINT chk_vet_schedule_day_range CHECK (day_of_week >= 1 AND day_of_week <= 7),
+  CONSTRAINT chk_vet_schedule_time_range CHECK (start_time < end_time)
 );
 
 CREATE TABLE IF NOT EXISTS vet_time_off (

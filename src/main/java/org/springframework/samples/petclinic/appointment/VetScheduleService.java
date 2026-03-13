@@ -17,7 +17,9 @@ package org.springframework.samples.petclinic.appointment;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.samples.petclinic.owner.ResourceNotFoundException;
@@ -124,6 +126,77 @@ public class VetScheduleService {
 		schedule.setIsAvailable(isAvailable);
 
 		return vetScheduleRepo.save(schedule);
+	}
+
+	/**
+	 * Updates (or creates) a vet's schedule for all 7 days of the week in a single
+	 * transaction.
+	 *
+	 * <p>
+	 * All days are validated first before any are saved. If any day fails validation, no
+	 * changes are committed (all-or-nothing). This prevents the partial-save problem
+	 * where an error on a later day would leave earlier days already persisted.
+	 * @param vetId the vet's ID
+	 * @param daySchedules map of ISO day-of-week number (1=Monday..7=Sunday) to
+	 * {@link DayScheduleRequest} carrying start time, end time, and availability flag
+	 * @return list of the saved {@link VetSchedule} records
+	 * @throws ResourceNotFoundException if the vet does not exist
+	 * @throws IllegalArgumentException if any day's times are invalid or outside clinic
+	 * hours
+	 */
+	public List<VetSchedule> updateWeekSchedule(Integer vetId, Map<Integer, DayScheduleRequest> daySchedules) {
+		// Validate all days first before persisting any
+		List<VetSchedule> toSave = new ArrayList<>();
+		for (Map.Entry<Integer, DayScheduleRequest> entry : daySchedules.entrySet()) {
+			Integer dayOfWeek = entry.getKey();
+			DayScheduleRequest req = entry.getValue();
+
+			var vet = vetRepo.findById(vetId)
+				.orElseThrow(() -> new ResourceNotFoundException("Vet not found with id: " + vetId));
+
+			if (!req.startTime().isBefore(req.endTime())) {
+				throw new IllegalArgumentException("Day " + dayOfWeek + ": Start time must be before end time");
+			}
+
+			Optional<ClinicScheduleConfig> clinicConfigOpt = clinicConfigRepo.findByDayOfWeek(dayOfWeek);
+			if (clinicConfigOpt.isPresent()) {
+				ClinicScheduleConfig config = clinicConfigOpt.get();
+				if (req.isAvailable() && !Boolean.TRUE.equals(config.getIsOpen())) {
+					throw new IllegalArgumentException(
+							"Day " + dayOfWeek + ": Cannot schedule vet on a day when the clinic is closed");
+				}
+				if (Boolean.TRUE.equals(config.getIsOpen())) {
+					if (req.startTime().isBefore(config.getOpenTime())
+							|| req.endTime().isAfter(config.getCloseTime())) {
+						throw new IllegalArgumentException(
+								"Day " + dayOfWeek + ": Vet schedule times must fall within clinic hours "
+										+ config.getOpenTime() + "-" + config.getCloseTime());
+					}
+				}
+			}
+
+			VetSchedule schedule = vetScheduleRepo.findByVetIdAndDayOfWeek(vetId, dayOfWeek).orElseGet(() -> {
+				VetSchedule newSchedule = new VetSchedule();
+				newSchedule.setVet(vet);
+				newSchedule.setDayOfWeek(dayOfWeek);
+				return newSchedule;
+			});
+			schedule.setStartTime(req.startTime());
+			schedule.setEndTime(req.endTime());
+			schedule.setIsAvailable(req.isAvailable());
+			toSave.add(schedule);
+		}
+
+		// All days passed validation — now save atomically
+		return vetScheduleRepo.saveAll(toSave);
+	}
+
+	/**
+	 * Carries the start time, end time, and availability flag for a single day in a
+	 * week-schedule update request.
+	 */
+	public record DayScheduleRequest(LocalTime startTime, LocalTime endTime, boolean isAvailable) {
+
 	}
 
 	/**

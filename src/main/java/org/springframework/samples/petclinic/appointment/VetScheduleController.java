@@ -20,8 +20,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.TextStyle;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -100,13 +100,17 @@ class VetScheduleController {
 	 * <p>
 	 * Form parameters are keyed by day: {@code day_N_start}, {@code day_N_end},
 	 * {@code day_N_available} for N=1..7.
+	 *
+	 * <p>
+	 * All days are validated and saved in a single transaction via
+	 * {@link VetScheduleService#updateWeekSchedule} so that a validation error on any day
+	 * prevents all days from being committed (all-or-nothing behaviour).
 	 */
 	@PostMapping("/vets/{vetId}/schedule")
 	public String updateVetSchedule(@PathVariable Integer vetId, @RequestParam Map<String, String> formParams,
 			RedirectAttributes redirectAttributes, Locale locale) {
 
-		List<String> errors = new ArrayList<>();
-
+		Map<Integer, VetScheduleService.DayScheduleRequest> daySchedules = new LinkedHashMap<>();
 		for (int day = 1; day <= 7; day++) {
 			String startParam = formParams.get("day_" + day + "_start");
 			String endParam = formParams.get("day_" + day + "_end");
@@ -117,27 +121,23 @@ class VetScheduleController {
 			}
 
 			if (endParam == null || endParam.isBlank()) {
-				errors.add("Day " + day + ": end time is required when start time is provided");
-				continue;
+				redirectAttributes.addFlashAttribute("error",
+						"Day " + day + ": end time is required when start time is provided");
+				return "redirect:/vets/" + vetId + "/schedule";
 			}
 
-			try {
-				LocalTime startTime = LocalTime.parse(startParam);
-				LocalTime endTime = LocalTime.parse(endParam);
-				boolean isAvailable = "true".equalsIgnoreCase(availableParam);
-
-				vetScheduleService.updateDaySchedule(vetId, day, startTime, endTime, isAvailable);
-			}
-			catch (IllegalArgumentException ex) {
-				errors.add("Day " + day + ": " + ex.getMessage());
-			}
+			LocalTime startTime = LocalTime.parse(startParam);
+			LocalTime endTime = LocalTime.parse(endParam);
+			boolean isAvailable = "true".equalsIgnoreCase(availableParam);
+			daySchedules.put(day, new VetScheduleService.DayScheduleRequest(startTime, endTime, isAvailable));
 		}
 
-		if (errors.isEmpty()) {
+		try {
+			vetScheduleService.updateWeekSchedule(vetId, daySchedules);
 			redirectAttributes.addFlashAttribute("message", messageSource.getMessage("schedule.saved", null, locale));
 		}
-		else {
-			redirectAttributes.addFlashAttribute("error", String.join("; ", errors));
+		catch (IllegalArgumentException ex) {
+			redirectAttributes.addFlashAttribute("error", ex.getMessage());
 		}
 
 		return "redirect:/vets/" + vetId + "/schedule";

@@ -91,7 +91,8 @@ public class ConflictDetectionService {
 		// Rule 1: Clinic closed check (early return)
 		Optional<ClinicScheduleConfig> clinicConfigOpt = clinicConfigRepo.findByDayOfWeek(dayOfWeek);
 		if (clinicConfigOpt.isEmpty() || !Boolean.TRUE.equals(clinicConfigOpt.get().getIsOpen())) {
-			conflicts.add(new SchedulingConflict(ConflictType.CLINIC_CLOSED, "Clinic is closed on " + dayName, null));
+			conflicts.add(new SchedulingConflict(ConflictType.CLINIC_CLOSED, "Clinic is closed on " + dayName, null,
+					"conflict.clinic.closed"));
 			return new ConflictResult(conflicts);
 		}
 		ClinicScheduleConfig clinicConfig = clinicConfigOpt.get();
@@ -101,7 +102,7 @@ public class ConflictDetectionService {
 			conflicts.add(new SchedulingConflict(ConflictType.OUTSIDE_CLINIC_HOURS,
 					"Appointment time " + startTime + "-" + endTime + " is outside clinic hours "
 							+ clinicConfig.getOpenTime() + "-" + clinicConfig.getCloseTime(),
-					null));
+					null, "conflict.outside.clinic.hours"));
 		}
 
 		// Rule 3: Vet not available
@@ -109,25 +110,25 @@ public class ConflictDetectionService {
 		if (vetScheduleOpt.isEmpty() || !Boolean.TRUE.equals(vetScheduleOpt.get().getIsAvailable())) {
 			String vetName = vet != null ? "Dr. " + vet.getLastName() : "Vet";
 			conflicts.add(new SchedulingConflict(ConflictType.VET_NOT_AVAILABLE,
-					vetName + " does not work on " + dayName, null));
+					vetName + " does not work on " + dayName, null, "conflict.vet.unavailable"));
 		}
 		else {
 			// Rule 4: Outside vet hours (only if vet is scheduled)
 			VetSchedule vetSchedule = vetScheduleOpt.get();
 			if (startTime.isBefore(vetSchedule.getStartTime()) || endTime.isAfter(vetSchedule.getEndTime())) {
 				String vetName = vet != null ? "Dr. " + vet.getLastName() : "Vet";
-				conflicts.add(new SchedulingConflict(
-						ConflictType.OUTSIDE_VET_HOURS, "Appointment time " + startTime + "-" + endTime + " is outside "
-								+ vetName + "'s hours " + vetSchedule.getStartTime() + "-" + vetSchedule.getEndTime(),
-						null));
+				conflicts.add(new SchedulingConflict(ConflictType.OUTSIDE_VET_HOURS,
+						"Appointment time " + startTime + "-" + endTime + " is outside " + vetName + "'s hours "
+								+ vetSchedule.getStartTime() + "-" + vetSchedule.getEndTime(),
+						null, "conflict.outside.vet.hours"));
 			}
 		}
 
 		// Rule 5: Vet time off
 		if (vetTimeOffRepo.existsByVetIdAndDate(vetId, date)) {
 			String vetName = vet != null ? "Dr. " + vet.getLastName() : "Vet";
-			conflicts
-				.add(new SchedulingConflict(ConflictType.VET_TIME_OFF, vetName + " has time off on " + date, null));
+			conflicts.add(new SchedulingConflict(ConflictType.VET_TIME_OFF, vetName + " has time off on " + date, null,
+					"conflict.vet.time.off"));
 		}
 
 		// Rule 6: Specialty mismatch
@@ -141,7 +142,7 @@ public class ConflictDetectionService {
 				String specialtyName = appointmentType.getRequiredSpecialty().getName();
 				conflicts.add(new SchedulingConflict(ConflictType.SPECIALTY_MISMATCH,
 						typeName + " requires " + specialtyName + " specialty, but " + vetName + " does not have it",
-						null));
+						null, "conflict.specialty.mismatch"));
 			}
 		}
 
@@ -151,8 +152,11 @@ public class ConflictDetectionService {
 		for (Appointment overlap : vetOverlaps) {
 			String vetName = vet != null ? "Dr. " + vet.getLastName() : "Vet";
 			String petName = overlap.getPet() != null ? overlap.getPet().getName() : "a pet";
-			conflicts.add(new SchedulingConflict(ConflictType.VET_OVERLAP, vetName + " already has an appointment at "
-					+ overlap.getStartTime() + "-" + overlap.getEndTime() + " for " + petName, overlap));
+			conflicts.add(
+					new SchedulingConflict(
+							ConflictType.VET_OVERLAP, vetName + " already has an appointment at "
+									+ overlap.getStartTime() + "-" + overlap.getEndTime() + " for " + petName,
+							overlap, "conflict.vet.overlap"));
 		}
 
 		// Rule 8: Pet overlap
@@ -163,7 +167,7 @@ public class ConflictDetectionService {
 			conflicts.add(new SchedulingConflict(ConflictType.PET_OVERLAP,
 					petName + " already has an appointment at " + overlap.getStartTime() + "-" + overlap.getEndTime()
 							+ " with Dr. " + (overlap.getVet() != null ? overlap.getVet().getLastName() : "unknown"),
-					overlap));
+					overlap, "conflict.pet.overlap"));
 		}
 
 		// Rule 9: Owner overlap (only report overlaps from OTHER pets)
@@ -176,8 +180,11 @@ public class ConflictDetectionService {
 				continue;
 			}
 			String petName = overlap.getPet() != null ? overlap.getPet().getName() : "a pet";
-			conflicts.add(new SchedulingConflict(ConflictType.OWNER_OVERLAP, "Owner already has an appointment for "
-					+ petName + " at " + overlap.getStartTime() + "-" + overlap.getEndTime(), overlap));
+			conflicts
+				.add(new SchedulingConflict(
+						ConflictType.OWNER_OVERLAP, "Owner already has an appointment for " + petName + " at "
+								+ overlap.getStartTime() + "-" + overlap.getEndTime(),
+						overlap, "conflict.owner.overlap"));
 		}
 
 		return new ConflictResult(conflicts);

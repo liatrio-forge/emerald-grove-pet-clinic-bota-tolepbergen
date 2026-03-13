@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.MessageSource;
 import org.springframework.samples.petclinic.vet.Vet;
 import org.springframework.samples.petclinic.vet.VetRepository;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,6 +45,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
@@ -81,6 +85,9 @@ class ScheduleViewControllerTests {
 
 	@Mock
 	private VetRepository vetRepo;
+
+	@Mock
+	private MessageSource messageSource;
 
 	private Vet vet1;
 
@@ -126,8 +133,12 @@ class ScheduleViewControllerTests {
 		sundayConfig.setIsOpen(false);
 
 		ScheduleViewController controller = new ScheduleViewController(appointmentRepo, availabilityService,
-				clinicConfigRepo, vetScheduleRepo, vetTimeOffRepo, vetRepo);
+				clinicConfigRepo, vetScheduleRepo, vetTimeOffRepo, vetRepo, messageSource);
 		mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+
+		// Default stub for vet.notFound message
+		given(messageSource.getMessage(eq("vet.notFound"), nullable(Object[].class), any(Locale.class)))
+			.willReturn("Vet not found.");
 
 		// Default stubs for vetRepo
 		given(vetRepo.findAll()).willReturn(List.of(vet1, vet2, vet3));
@@ -253,12 +264,20 @@ class ScheduleViewControllerTests {
 
 	@Test
 	void dailyModelAttributes() throws Exception {
+		given(clinicConfigRepo.findByDayOfWeek(LocalDate.now().getDayOfWeek().getValue()))
+			.willReturn(Optional.of(mondayConfig));
+
 		mockMvc.perform(get("/appointments/schedule"))
 			.andExpect(status().isOk())
 			.andExpect(model().attributeExists("currentDate"))
+			.andExpect(model().attributeExists("date"))
 			.andExpect(model().attributeExists("timeSlots"))
 			.andExpect(model().attributeExists("availableVets"))
+			.andExpect(model().attributeExists("vets"))
 			.andExpect(model().attributeExists("appointmentsByVet"))
+			.andExpect(model().attributeExists("appointmentGrid"))
+			.andExpect(model().attributeExists("slotSpans"))
+			.andExpect(model().attributeExists("skippedSlots"))
 			.andExpect(model().attributeExists("prevDate"))
 			.andExpect(model().attributeExists("nextDate"))
 			.andExpect(model().attributeExists("isToday"));

@@ -28,10 +28,12 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.MessageSource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.samples.petclinic.vet.Vet;
 import org.springframework.samples.petclinic.vet.VetRepository;
@@ -68,6 +70,8 @@ class ScheduleViewController {
 	private final VetTimeOffRepository vetTimeOffRepo;
 
 	private final VetRepository vetRepo;
+
+	private final MessageSource messageSource;
 
 	/**
 	 * Value object carrying per-day status for the weekly calendar template.
@@ -109,13 +113,14 @@ class ScheduleViewController {
 
 	public ScheduleViewController(AppointmentRepository appointmentRepo, AvailabilityService availabilityService,
 			ClinicScheduleConfigRepository clinicConfigRepo, VetScheduleRepository vetScheduleRepo,
-			VetTimeOffRepository vetTimeOffRepo, VetRepository vetRepo) {
+			VetTimeOffRepository vetTimeOffRepo, VetRepository vetRepo, MessageSource messageSource) {
 		this.appointmentRepo = appointmentRepo;
 		this.availabilityService = availabilityService;
 		this.clinicConfigRepo = clinicConfigRepo;
 		this.vetScheduleRepo = vetScheduleRepo;
 		this.vetTimeOffRepo = vetTimeOffRepo;
 		this.vetRepo = vetRepo;
+		this.messageSource = messageSource;
 	}
 
 	/**
@@ -223,7 +228,7 @@ class ScheduleViewController {
 	@GetMapping("/weekly")
 	public String weeklyView(@RequestParam(required = false) Integer vetId,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate week, Model model,
-			RedirectAttributes redirectAttributes) {
+			RedirectAttributes redirectAttributes, Locale locale) {
 
 		// Resolve week start (always Monday) — normalize any supplied date to its Monday
 		LocalDate weekStart = (week != null) ? week.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -244,7 +249,7 @@ class ScheduleViewController {
 				selectedVet = vetOpt.get();
 			}
 			else {
-				redirectAttributes.addFlashAttribute("error", "Vet not found.");
+				redirectAttributes.addFlashAttribute("error", messageSource.getMessage("vet.notFound", null, locale));
 				return "redirect:/appointments/schedule/weekly";
 			}
 		}

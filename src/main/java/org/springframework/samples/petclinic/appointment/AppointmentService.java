@@ -29,6 +29,7 @@ import org.springframework.samples.petclinic.owner.Visit;
 import org.springframework.samples.petclinic.vet.Vet;
 import org.springframework.samples.petclinic.vet.VetRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -65,9 +66,14 @@ public class AppointmentService {
 
 	/**
 	 * Creates a new appointment after validating all conflict rules.
+	 *
+	 * <p>
+	 * Uses {@link Isolation#SERIALIZABLE} to prevent two concurrent requests from both
+	 * observing no conflicts and then both committing overlapping appointments.
 	 * @throws ResourceNotFoundException if vet, appointmentType, owner, or pet not found
 	 * @throws SchedulingConflictException if any conflicts are detected
 	 */
+	@Transactional(isolation = Isolation.SERIALIZABLE)
 	public Appointment createAppointment(Integer petId, Integer ownerId, Integer vetId, Integer appointmentTypeId,
 			LocalDate date, LocalTime startTime, String notes) {
 
@@ -112,11 +118,14 @@ public class AppointmentService {
 	 *
 	 * <p>
 	 * Only SCHEDULED and CONFIRMED appointments can be edited. Re-validates all conflict
-	 * rules after changes, excluding the appointment itself from overlap checks.
+	 * rules after changes, excluding the appointment itself from overlap checks. Uses
+	 * {@link Isolation#SERIALIZABLE} to prevent concurrent updates from both observing no
+	 * conflicts and committing overlapping appointments.
 	 * @throws ResourceNotFoundException if appointment not found
 	 * @throws IllegalStateException if appointment is CANCELLED or COMPLETED
 	 * @throws SchedulingConflictException if any conflicts are detected after changes
 	 */
+	@Transactional(isolation = Isolation.SERIALIZABLE)
 	public Appointment updateAppointment(Integer appointmentId, Integer vetId, LocalDate date, LocalTime startTime,
 			String notes) {
 
@@ -165,7 +174,8 @@ public class AppointmentService {
 	public Appointment confirmAppointment(Integer appointmentId) {
 		Appointment appointment = appointmentRepo.findByIdWithDetails(appointmentId)
 			.orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
-		appointment.setStatus(AppointmentStatus.CONFIRMED);
+		AppointmentStatus newStatus = appointment.getStatus().transitionTo(AppointmentStatus.CONFIRMED);
+		appointment.setStatus(newStatus);
 		return appointmentRepo.save(appointment);
 	}
 
@@ -177,7 +187,8 @@ public class AppointmentService {
 	public Appointment cancelAppointment(Integer appointmentId) {
 		Appointment appointment = appointmentRepo.findByIdWithDetails(appointmentId)
 			.orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
-		appointment.setStatus(AppointmentStatus.CANCELLED);
+		AppointmentStatus newStatus = appointment.getStatus().transitionTo(AppointmentStatus.CANCELLED);
+		appointment.setStatus(newStatus);
 		appointment.setCancelledAt(LocalDateTime.now());
 		return appointmentRepo.save(appointment);
 	}
@@ -190,7 +201,8 @@ public class AppointmentService {
 	public Appointment completeAppointment(Integer appointmentId) {
 		Appointment appointment = appointmentRepo.findByIdWithDetails(appointmentId)
 			.orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
-		appointment.setStatus(AppointmentStatus.COMPLETED);
+		AppointmentStatus newStatus = appointment.getStatus().transitionTo(AppointmentStatus.COMPLETED);
+		appointment.setStatus(newStatus);
 
 		Integer ownerId = appointment.getPet().getOwner().getId();
 		Owner owner = ownerRepo.findById(ownerId)
