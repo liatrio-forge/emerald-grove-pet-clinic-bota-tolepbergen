@@ -1,7 +1,7 @@
 variable "availability_zones" {
   type        = list(string)
-  description = "List of availability zones to use"
-  default     = ["us-east-1a", "us-east-1b"]
+  description = "List of availability zones to use. Must be valid AZs in the chosen aws_region."
+  default     = []
 }
 
 variable "aws_region" {

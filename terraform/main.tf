@@ -1,9 +1,18 @@
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+locals {
+  # Use provided AZs, or fall back to the first two available in the region
+  resolved_azs = length(var.availability_zones) > 0 ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, 2)
+}
+
 module "networking" {
   source = "./modules/networking"
 
   name_prefix        = local.name_prefix
   vpc_cidr           = var.vpc_cidr
-  availability_zones = var.availability_zones
+  availability_zones = local.resolved_azs
   tags               = local.common_tags
 }
 

@@ -26,10 +26,11 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [var.security_group_id]
 
-  publicly_accessible = false
-  multi_az            = false
-  skip_final_snapshot = true
-  storage_encrypted   = true
+  publicly_accessible  = false
+  multi_az             = false
+  skip_final_snapshot  = true # Acceptable for staging; set to false for production
+  deletion_protection  = false # Set to true for production environments
+  storage_encrypted    = true
 
   tags = merge(var.tags, { Name = "${var.name_prefix}-db" })
 }
