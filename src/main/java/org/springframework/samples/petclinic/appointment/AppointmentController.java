@@ -20,8 +20,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
+import org.springframework.context.MessageSource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.samples.petclinic.owner.Owner;
 import org.springframework.samples.petclinic.owner.OwnerRepository;
@@ -71,15 +73,19 @@ class AppointmentController {
 
 	private final AvailabilityService availabilityService;
 
+	private final MessageSource messageSource;
+
 	private final Clock clock;
 
 	public AppointmentController(AppointmentService appointmentService, AppointmentTypeRepository appointmentTypeRepo,
-			OwnerRepository ownerRepo, VetRepository vetRepo, AvailabilityService availabilityService, Clock clock) {
+			OwnerRepository ownerRepo, VetRepository vetRepo, AvailabilityService availabilityService,
+			MessageSource messageSource, Clock clock) {
 		this.appointmentService = appointmentService;
 		this.appointmentTypeRepo = appointmentTypeRepo;
 		this.ownerRepo = ownerRepo;
 		this.vetRepo = vetRepo;
 		this.availabilityService = availabilityService;
+		this.messageSource = messageSource;
 		this.clock = clock;
 	}
 
@@ -156,12 +162,14 @@ class AppointmentController {
 			@RequestParam Integer vetId, @RequestParam Integer appointmentTypeId,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
-			@RequestParam(required = false) String notes, Model model, RedirectAttributes redirectAttributes) {
+			@RequestParam(required = false) String notes, Model model, RedirectAttributes redirectAttributes,
+			Locale locale) {
 
 		try {
 			Appointment appointment = appointmentService.createAppointment(petId, ownerId, vetId, appointmentTypeId,
 					date, startTime, notes);
-			redirectAttributes.addFlashAttribute("message", "Appointment booked successfully.");
+			redirectAttributes.addFlashAttribute("message",
+					messageSource.getMessage("appointment.booked", null, locale));
 			return "redirect:/appointments/" + appointment.getId();
 		}
 		catch (SchedulingConflictException ex) {
@@ -214,15 +222,16 @@ class AppointmentController {
 	 * @throws ResourceNotFoundException if no appointment with the given id exists
 	 */
 	@GetMapping("/{id}/edit")
-	public String initEditAppointmentForm(@PathVariable Integer id, Model model,
-			RedirectAttributes redirectAttributes) {
+	public String initEditAppointmentForm(@PathVariable Integer id, Model model, RedirectAttributes redirectAttributes,
+			Locale locale) {
 
 		Appointment appointment = appointmentService.findById(id)
 			.orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
 
 		AppointmentStatus status = appointment.getStatus();
 		if (status == AppointmentStatus.CANCELLED || status == AppointmentStatus.COMPLETED) {
-			redirectAttributes.addFlashAttribute("error", "Cannot edit appointment in " + status.name() + " status.");
+			redirectAttributes.addFlashAttribute("error",
+					messageSource.getMessage("appointment.cannotEdit", new Object[] { status.name() }, locale));
 			return "redirect:/appointments/" + id;
 		}
 
@@ -253,11 +262,13 @@ class AppointmentController {
 	public String processEditAppointmentForm(@PathVariable Integer id, @RequestParam Integer vetId,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
-			@RequestParam(required = false) String notes, Model model, RedirectAttributes redirectAttributes) {
+			@RequestParam(required = false) String notes, Model model, RedirectAttributes redirectAttributes,
+			Locale locale) {
 
 		try {
 			appointmentService.updateAppointment(id, vetId, date, startTime, notes);
-			redirectAttributes.addFlashAttribute("message", "Appointment updated successfully.");
+			redirectAttributes.addFlashAttribute("message",
+					messageSource.getMessage("appointment.updated", null, locale));
 			return "redirect:/appointments/" + id;
 		}
 		catch (SchedulingConflictException ex) {

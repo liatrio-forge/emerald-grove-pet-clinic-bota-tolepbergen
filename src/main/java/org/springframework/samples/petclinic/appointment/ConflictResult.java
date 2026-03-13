@@ -24,6 +24,14 @@ import java.util.List;
 public record ConflictResult(List<SchedulingConflict> conflicts) {
 
 	/**
+	 * Canonical constructor that wraps the provided list in an unmodifiable copy to
+	 * guarantee immutability.
+	 */
+	public ConflictResult(List<SchedulingConflict> conflicts) {
+		this.conflicts = List.copyOf(conflicts);
+	}
+
+	/**
 	 * Returns {@code true} if at least one conflict was detected.
 	 * @return {@code true} if the list is non-empty
 	 */

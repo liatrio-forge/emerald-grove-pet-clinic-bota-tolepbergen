@@ -229,6 +229,8 @@ public class AppointmentService {
 		return appointmentRepo.findByVetIdAndDateBetween(vetId, start, end);
 	}
 
+	private static final int VISIT_DESCRIPTION_MAX_LENGTH = 255;
+
 	private String buildVisitDescription(Appointment appointment) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(appointment.getAppointmentType().getName());
@@ -236,7 +238,11 @@ public class AppointmentService {
 		if (appointment.getNotes() != null && !appointment.getNotes().isBlank()) {
 			sb.append(" - ").append(appointment.getNotes());
 		}
-		return sb.toString();
+		String description = sb.toString();
+		if (description.length() > VISIT_DESCRIPTION_MAX_LENGTH) {
+			return description.substring(0, VISIT_DESCRIPTION_MAX_LENGTH);
+		}
+		return description;
 	}
 
 }

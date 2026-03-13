@@ -101,6 +101,9 @@ public class AvailabilityService {
 
 		// 5. Get slot duration from clinic config
 		int slotDurationMinutes = clinicConfig.getSlotDurationMinutes();
+		if (slotDurationMinutes <= 0) {
+			return List.of();
+		}
 
 		// 6. Get existing appointments for this vet on this date
 		List<Appointment> existingAppointments = appointmentRepo.findByVetIdAndDate(vetId, date);

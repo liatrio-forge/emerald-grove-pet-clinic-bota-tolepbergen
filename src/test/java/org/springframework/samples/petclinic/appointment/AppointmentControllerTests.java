@@ -45,6 +45,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 import org.springframework.samples.petclinic.owner.Owner;
 import org.springframework.samples.petclinic.owner.OwnerRepository;
 import org.springframework.samples.petclinic.owner.Pet;
@@ -88,6 +89,9 @@ class AppointmentControllerTests {
 	@Mock
 	private AvailabilityService availabilityService;
 
+	@Mock
+	private MessageSource messageSource;
+
 	private MockMvc mockMvc;
 
 	private Owner testOwner;
@@ -105,7 +109,7 @@ class AppointmentControllerTests {
 	@BeforeEach
 	void setup() {
 		AppointmentController controller = new AppointmentController(appointmentService, appointmentTypeRepo, ownerRepo,
-				vetRepo, availabilityService, FIXED_CLOCK);
+				vetRepo, availabilityService, messageSource, FIXED_CLOCK);
 		mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
 		testPet = new Pet();

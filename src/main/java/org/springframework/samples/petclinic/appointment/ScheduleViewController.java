@@ -378,6 +378,9 @@ class ScheduleViewController {
 	 * @return list of slot start times as {@link LocalTime} values
 	 */
 	private List<LocalTime> generateTimeSlots(LocalTime openTime, LocalTime closeTime, int slotDurationMinutes) {
+		if (slotDurationMinutes <= 0) {
+			return List.of();
+		}
 		List<LocalTime> slots = new ArrayList<>();
 		LocalTime current = openTime;
 		while (current.plusMinutes(slotDurationMinutes).compareTo(closeTime) <= 0) {

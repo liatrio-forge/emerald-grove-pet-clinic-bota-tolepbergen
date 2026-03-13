@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.samples.petclinic.owner.ResourceNotFoundException;
 import org.springframework.samples.petclinic.vet.Vet;
@@ -42,6 +43,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -83,6 +85,9 @@ class VetScheduleControllerTests {
 	@Mock
 	private ClinicScheduleConfigRepository clinicConfigRepo;
 
+	@Mock
+	private MessageSource messageSource;
+
 	private Vet testVet;
 
 	@BeforeEach
@@ -90,7 +95,7 @@ class VetScheduleControllerTests {
 		MockitoAnnotations.openMocks(this);
 
 		VetScheduleController controller = new VetScheduleController(vetScheduleService, vetRepo, clinicConfigRepo,
-				FIXED_CLOCK);
+				messageSource, FIXED_CLOCK);
 
 		// Use InternalResourceViewResolver so standaloneSetup does not fail on
 		// view name resolution during redirect assertions.
@@ -109,6 +114,19 @@ class VetScheduleControllerTests {
 		given(vetScheduleService.getWeeklySchedule(TEST_VET_ID)).willReturn(Collections.emptyList());
 		given(vetScheduleService.getTimeOff(TEST_VET_ID)).willReturn(Collections.emptyList());
 		given(clinicConfigRepo.findAllByOrderByDayOfWeekAsc()).willReturn(Collections.emptyList());
+
+		// Set up MessageSource mock to return expected flash messages
+		given(messageSource.getMessage(eq("schedule.saved"), nullable(Object[].class), any(java.util.Locale.class)))
+			.willReturn("Schedule saved successfully.");
+		given(messageSource.getMessage(eq("timeoff.added"), nullable(Object[].class), any(java.util.Locale.class)))
+			.willReturn("Time off added successfully.");
+		given(messageSource.getMessage(eq("timeoff.addedWithWarning"), any(Object[].class),
+				any(java.util.Locale.class)))
+			.willReturn("Time off added, but there are 2 existing appointment(s) on this date that need rescheduling.");
+		given(messageSource.getMessage(eq("timeoff.removed"), nullable(Object[].class), any(java.util.Locale.class)))
+			.willReturn("Time off removed successfully.");
+		given(messageSource.getMessage(eq("timeoff.duplicate"), nullable(Object[].class), any(java.util.Locale.class)))
+			.willReturn("Time off already exists for this date.");
 	}
 
 	// -------------------------------------------------------------------------

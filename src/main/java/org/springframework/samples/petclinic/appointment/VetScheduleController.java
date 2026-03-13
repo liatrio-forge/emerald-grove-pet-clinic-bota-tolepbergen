@@ -23,8 +23,10 @@ import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.samples.petclinic.owner.ResourceNotFoundException;
@@ -54,13 +56,16 @@ class VetScheduleController {
 
 	private final ClinicScheduleConfigRepository clinicConfigRepo;
 
+	private final MessageSource messageSource;
+
 	private final Clock clock;
 
 	public VetScheduleController(VetScheduleService vetScheduleService, VetRepository vetRepo,
-			ClinicScheduleConfigRepository clinicConfigRepo, Clock clock) {
+			ClinicScheduleConfigRepository clinicConfigRepo, MessageSource messageSource, Clock clock) {
 		this.vetScheduleService = vetScheduleService;
 		this.vetRepo = vetRepo;
 		this.clinicConfigRepo = clinicConfigRepo;
+		this.messageSource = messageSource;
 		this.clock = clock;
 	}
 
@@ -98,7 +103,7 @@ class VetScheduleController {
 	 */
 	@PostMapping("/vets/{vetId}/schedule")
 	public String updateVetSchedule(@PathVariable Integer vetId, @RequestParam Map<String, String> formParams,
-			RedirectAttributes redirectAttributes) {
+			RedirectAttributes redirectAttributes, Locale locale) {
 
 		List<String> errors = new ArrayList<>();
 
@@ -129,7 +134,7 @@ class VetScheduleController {
 		}
 
 		if (errors.isEmpty()) {
-			redirectAttributes.addFlashAttribute("message", "Schedule saved successfully.");
+			redirectAttributes.addFlashAttribute("message", messageSource.getMessage("schedule.saved", null, locale));
 		}
 		else {
 			redirectAttributes.addFlashAttribute("error", String.join("; ", errors));
@@ -144,25 +149,26 @@ class VetScheduleController {
 	@PostMapping("/vets/{vetId}/timeoff")
 	public String addTimeOff(@PathVariable Integer vetId,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-			@RequestParam(required = false) String reason, RedirectAttributes redirectAttributes) {
+			@RequestParam(required = false) String reason, RedirectAttributes redirectAttributes, Locale locale) {
 
 		try {
 			TimeOffResult result = vetScheduleService.addTimeOff(vetId, date, reason);
 
 			if (result.hasExistingAppointments()) {
 				int count = result.existingAppointments().size();
-				redirectAttributes.addFlashAttribute("conflictWarning", "Time off added, but there are " + count
-						+ " existing appointment(s) on this date that need rescheduling.");
+				redirectAttributes.addFlashAttribute("conflictWarning",
+						messageSource.getMessage("timeoff.addedWithWarning", new Object[] { count }, locale));
 			}
 			else {
-				redirectAttributes.addFlashAttribute("message", "Time off added successfully.");
+				redirectAttributes.addFlashAttribute("message",
+						messageSource.getMessage("timeoff.added", null, locale));
 			}
 		}
 		catch (IllegalArgumentException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
 		}
 		catch (DataIntegrityViolationException ex) {
-			redirectAttributes.addFlashAttribute("error", "Time off already exists for this date.");
+			redirectAttributes.addFlashAttribute("error", messageSource.getMessage("timeoff.duplicate", null, locale));
 		}
 
 		return "redirect:/vets/" + vetId + "/schedule";
@@ -173,11 +179,11 @@ class VetScheduleController {
 	 */
 	@PostMapping("/vets/{vetId}/timeoff/{id}/delete")
 	public String removeTimeOff(@PathVariable Integer vetId, @PathVariable Integer id,
-			RedirectAttributes redirectAttributes) {
+			RedirectAttributes redirectAttributes, Locale locale) {
 
 		try {
 			vetScheduleService.removeTimeOff(vetId, id);
-			redirectAttributes.addFlashAttribute("message", "Time off removed successfully.");
+			redirectAttributes.addFlashAttribute("message", messageSource.getMessage("timeoff.removed", null, locale));
 		}
 		catch (ResourceNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
