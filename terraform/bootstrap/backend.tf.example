@@ -1,0 +1,14 @@
+# WARNING: Update bucket and region below to match the values output by your bootstrap apply
+# before copying this file to backend.tf and running: terraform init -migrate-state
+# Copy to backend.tf after initial apply, then run: terraform init -migrate-state
+# Bucket name pattern: {project_name}-{environment}-tfstate
+# To destroy: remove backend.tf, run terraform init -migrate-state, then terraform destroy
+terraform {
+  backend "s3" {
+    bucket       = "petclinic-bt-staging-tfstate"
+    key          = "bootstrap/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+    encrypt      = true
+  }
+}
