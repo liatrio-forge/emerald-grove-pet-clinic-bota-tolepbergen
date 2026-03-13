@@ -15,6 +15,7 @@
  */
 package org.springframework.samples.petclinic.appointment;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -73,6 +74,8 @@ class ScheduleViewController {
 
 	private final MessageSource messageSource;
 
+	private final Clock clock;
+
 	/**
 	 * Value object carrying per-day status for the weekly calendar template.
 	 */
@@ -113,7 +116,7 @@ class ScheduleViewController {
 
 	public ScheduleViewController(AppointmentRepository appointmentRepo, AvailabilityService availabilityService,
 			ClinicScheduleConfigRepository clinicConfigRepo, VetScheduleRepository vetScheduleRepo,
-			VetTimeOffRepository vetTimeOffRepo, VetRepository vetRepo, MessageSource messageSource) {
+			VetTimeOffRepository vetTimeOffRepo, VetRepository vetRepo, MessageSource messageSource, Clock clock) {
 		this.appointmentRepo = appointmentRepo;
 		this.availabilityService = availabilityService;
 		this.clinicConfigRepo = clinicConfigRepo;
@@ -121,6 +124,7 @@ class ScheduleViewController {
 		this.vetTimeOffRepo = vetTimeOffRepo;
 		this.vetRepo = vetRepo;
 		this.messageSource = messageSource;
+		this.clock = clock;
 	}
 
 	/**
@@ -137,8 +141,9 @@ class ScheduleViewController {
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			Model model) {
 
-		LocalDate currentDate = (date != null) ? date : LocalDate.now();
-		boolean isToday = currentDate.equals(LocalDate.now());
+		LocalDate today = LocalDate.now(clock);
+		LocalDate currentDate = (date != null) ? date : today;
+		boolean isToday = currentDate.equals(today);
 
 		// "currentDate" for test backward-compat; "date" for template
 		model.addAttribute("currentDate", currentDate);
@@ -232,7 +237,7 @@ class ScheduleViewController {
 
 		// Resolve week start (always Monday) — normalize any supplied date to its Monday
 		LocalDate weekStart = (week != null) ? week.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-				: LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+				: LocalDate.now(clock).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 		LocalDate weekEnd = weekStart.plusDays(6);
 
 		// All vets for dropdown

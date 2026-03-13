@@ -145,14 +145,15 @@ public class VetScheduleService {
 	 * hours
 	 */
 	public List<VetSchedule> updateWeekSchedule(Integer vetId, Map<Integer, DayScheduleRequest> daySchedules) {
+		// Validate vet exists before iterating (also covers the empty daySchedules case)
+		var vet = vetRepo.findById(vetId)
+			.orElseThrow(() -> new ResourceNotFoundException("Vet not found with id: " + vetId));
+
 		// Validate all days first before persisting any
 		List<VetSchedule> toSave = new ArrayList<>();
 		for (Map.Entry<Integer, DayScheduleRequest> entry : daySchedules.entrySet()) {
 			Integer dayOfWeek = entry.getKey();
 			DayScheduleRequest req = entry.getValue();
-
-			var vet = vetRepo.findById(vetId)
-				.orElseThrow(() -> new ResourceNotFoundException("Vet not found with id: " + vetId));
 
 			if (!req.startTime().isBefore(req.endTime())) {
 				throw new IllegalArgumentException("Day " + dayOfWeek + ": Start time must be before end time");

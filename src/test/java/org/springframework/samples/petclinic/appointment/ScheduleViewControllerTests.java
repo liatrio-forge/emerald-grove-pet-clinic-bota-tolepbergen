@@ -15,9 +15,12 @@
  */
 package org.springframework.samples.petclinic.appointment;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Locale;
@@ -65,6 +68,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ScheduleViewControllerTests {
+
+	private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-04-06T09:00:00Z"), ZoneId.of("UTC"));
 
 	private MockMvc mockMvc;
 
@@ -133,7 +138,7 @@ class ScheduleViewControllerTests {
 		sundayConfig.setIsOpen(false);
 
 		ScheduleViewController controller = new ScheduleViewController(appointmentRepo, availabilityService,
-				clinicConfigRepo, vetScheduleRepo, vetTimeOffRepo, vetRepo, messageSource);
+				clinicConfigRepo, vetScheduleRepo, vetTimeOffRepo, vetRepo, messageSource, FIXED_CLOCK);
 		mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
 		// Default stub for vet.notFound message
@@ -171,13 +176,13 @@ class ScheduleViewControllerTests {
 
 	@Test
 	void dailyDefaultDate() throws Exception {
-		// No date param => defaults to today
-		given(clinicConfigRepo.findByDayOfWeek(LocalDate.now().getDayOfWeek().getValue()))
+		// No date param => defaults to today (as seen by the controller's FIXED_CLOCK)
+		given(clinicConfigRepo.findByDayOfWeek(LocalDate.now(FIXED_CLOCK).getDayOfWeek().getValue()))
 			.willReturn(Optional.of(mondayConfig));
 
 		mockMvc.perform(get("/appointments/schedule"))
 			.andExpect(status().isOk())
-			.andExpect(model().attribute("currentDate", LocalDate.now()))
+			.andExpect(model().attribute("currentDate", LocalDate.now(FIXED_CLOCK)))
 			.andExpect(model().attribute("isToday", true));
 	}
 
@@ -264,7 +269,7 @@ class ScheduleViewControllerTests {
 
 	@Test
 	void dailyModelAttributes() throws Exception {
-		given(clinicConfigRepo.findByDayOfWeek(LocalDate.now().getDayOfWeek().getValue()))
+		given(clinicConfigRepo.findByDayOfWeek(LocalDate.now(FIXED_CLOCK).getDayOfWeek().getValue()))
 			.willReturn(Optional.of(mondayConfig));
 
 		mockMvc.perform(get("/appointments/schedule"))
@@ -296,7 +301,7 @@ class ScheduleViewControllerTests {
 
 	@Test
 	void weeklyDefaultVetAndWeek() throws Exception {
-		LocalDate today = LocalDate.now();
+		LocalDate today = LocalDate.now(FIXED_CLOCK);
 		LocalDate expectedWeekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
 		mockMvc.perform(get("/appointments/schedule/weekly"))

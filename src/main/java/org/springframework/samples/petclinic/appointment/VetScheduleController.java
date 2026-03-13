@@ -19,6 +19,7 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -116,20 +117,35 @@ class VetScheduleController {
 			String endParam = formParams.get("day_" + day + "_end");
 			String availableParam = formParams.get("day_" + day + "_available");
 
-			if (startParam == null || startParam.isBlank()) {
+			boolean startBlank = startParam == null || startParam.isBlank();
+			boolean endBlank = endParam == null || endParam.isBlank();
+
+			if (startBlank && endBlank) {
 				continue;
 			}
 
-			if (endParam == null || endParam.isBlank()) {
+			if (startBlank) {
+				redirectAttributes.addFlashAttribute("error",
+						"Day " + day + ": start time is required when end time is provided");
+				return "redirect:/vets/" + vetId + "/schedule";
+			}
+
+			if (endBlank) {
 				redirectAttributes.addFlashAttribute("error",
 						"Day " + day + ": end time is required when start time is provided");
 				return "redirect:/vets/" + vetId + "/schedule";
 			}
 
-			LocalTime startTime = LocalTime.parse(startParam);
-			LocalTime endTime = LocalTime.parse(endParam);
-			boolean isAvailable = "true".equalsIgnoreCase(availableParam);
-			daySchedules.put(day, new VetScheduleService.DayScheduleRequest(startTime, endTime, isAvailable));
+			try {
+				LocalTime startTime = LocalTime.parse(startParam);
+				LocalTime endTime = LocalTime.parse(endParam);
+				boolean isAvailable = "true".equalsIgnoreCase(availableParam);
+				daySchedules.put(day, new VetScheduleService.DayScheduleRequest(startTime, endTime, isAvailable));
+			}
+			catch (DateTimeParseException ex) {
+				redirectAttributes.addFlashAttribute("error", "Day " + day + ": invalid time format — use HH:mm");
+				return "redirect:/vets/" + vetId + "/schedule";
+			}
 		}
 
 		try {
