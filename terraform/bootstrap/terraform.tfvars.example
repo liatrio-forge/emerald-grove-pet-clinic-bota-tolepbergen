@@ -1,0 +1,4 @@
+aws_region        = "us-east-1"
+environment       = "staging"
+github_repository = "liatrio-forge/emerald-grove-pet-clinic-bota-tolepbergen"
+project_name      = "petclinic-bt"

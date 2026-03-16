@@ -1,0 +1,188 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (leave empty to build fresh)'
+        required: false
+        type: string
+      skip_tests:
+        description: 'Skip CI and E2E tests (emergency deploys only)'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-staging-bt
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    if: ${{ !inputs.skip_tests }}
+
+  e2e:
+    uses: ./.github/workflows/e2e-tests.yml
+    if: ${{ !inputs.skip_tests }}
+
+  build-and-push:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    needs: [ci, e2e]
+    if: |
+      always() &&
+      !cancelled() &&
+      (needs.ci.result == 'success' || needs.ci.result == 'skipped') &&
+      (needs.e2e.result == 'success' || needs.e2e.result == 'skipped') &&
+      github.event.inputs.image_tag == ''
+    timeout-minutes: 20
+    outputs:
+      image_tag: ${{ steps.image-tag.outputs.image_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEPLOY_BT }}
+          aws-region: ${{ vars.AWS_REGION_BT }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.ecr-login.outputs.registry }}/${{ vars.ECR_REPOSITORY_BT }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+
+      - name: Capture immutable image tag
+        id: image-tag
+        run: echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  terraform:
+    name: Terraform apply
+    runs-on: ubuntu-latest
+    needs: [ci, e2e, build-and-push]
+    if: |
+      always() &&
+      !cancelled() &&
+      (needs.ci.result == 'success' || needs.ci.result == 'skipped') &&
+      (needs.e2e.result == 'success' || needs.e2e.result == 'skipped') &&
+      (needs.build-and-push.result == 'success' || github.event.inputs.image_tag != '')
+    outputs:
+      image_tag: ${{ steps.resolve.outputs.tag }}
+      full_image: ${{ steps.resolve.outputs.full_image }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Resolve image tag
+        id: resolve
+        env:
+          MANUAL_TAG: ${{ github.event.inputs.image_tag }}
+          BUILD_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID_BT }}.dkr.ecr.${{ vars.AWS_REGION_BT }}.amazonaws.com
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY_BT }}
+        run: |
+          TAG="${MANUAL_TAG:-$BUILD_TAG}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "full_image=${ECR_REGISTRY}/${ECR_REPOSITORY}:${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved image tag: ${TAG}"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEPLOY_BT }}
+          aws-region: ${{ vars.AWS_REGION_BT }}
+
+      - name: Verify image exists in ECR
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.image_tag != '' }}
+        run: |
+          aws ecr describe-images \
+            --repository-name "${{ vars.ECR_REPOSITORY_BT }}" \
+            --image-ids imageTag="${{ steps.resolve.outputs.tag }}" \
+            --region "${{ vars.AWS_REGION_BT }}" >/dev/null
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: terraform
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET_BT }}" \
+            -backend-config="key=${{ secrets.TF_BACKEND_KEY_BT }}" \
+            -backend-config="region=${{ vars.AWS_REGION_BT }}"
+
+      - name: Terraform apply
+        working-directory: terraform
+        env:
+          TF_VAR_container_image: ${{ steps.resolve.outputs.full_image }}
+          TF_VAR_aws_region: ${{ vars.AWS_REGION_BT }}
+        run: terraform apply -input=false -auto-approve
+
+  deploy-ecs:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    needs: [terraform]
+    timeout-minutes: 15
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEPLOY_BT }}
+          aws-region: ${{ vars.AWS_REGION_BT }}
+
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ vars.ECS_TASK_FAMILY_BT }} \
+            --query 'taskDefinition' \
+            --output json > task-definition.json
+
+      - name: Render new task definition
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ vars.ECS_TASK_FAMILY_BT }}
+          image: ${{ needs.terraform.outputs.full_image }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: ${{ vars.ECS_SERVICE_BT }}
+          cluster: ${{ vars.ECS_CLUSTER_BT }}
+          wait-for-service-stability: true
