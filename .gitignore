@@ -50,3 +50,9 @@ temp
 
 ### Local Dev ###
 .local/
+
+### Terraform ###
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup

@@ -1,0 +1,11 @@
+project_name       = "petclinic-bt"
+environment        = "staging"
+aws_region         = "us-east-1"
+availability_zones = ["us-east-1a", "us-east-1b"]
+vpc_cidr           = "10.0.0.0/16"
+db_instance_class  = "db.t3.micro"
+ecs_cpu            = 512
+ecs_memory         = 1024
+container_image    = "277802554323.dkr.ecr.us-east-1.amazonaws.com/petclinic-bt-staging:sha-6798c5a-amd64"
+container_port     = 8080
+desired_count      = 1
