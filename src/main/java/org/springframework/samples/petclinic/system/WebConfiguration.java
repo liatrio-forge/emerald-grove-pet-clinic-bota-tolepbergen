@@ -1,5 +1,8 @@
 package org.springframework.samples.petclinic.system;
 
+import java.time.Clock;
+import java.util.Locale;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.LocaleResolver;
@@ -7,8 +10,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
-
-import java.util.Locale;
 
 /**
  * Configures internationalization (i18n) support for the application.
@@ -52,9 +53,22 @@ public class WebConfiguration implements WebMvcConfigurer {
 	 * Registers the locale change interceptor so it can run on each request.
 	 * @param registry where interceptors are added
 	 */
+	/**
+	 * Registers the locale change interceptor so it can run on each request.
+	 * @param registry where interceptors are added
+	 */
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(localeChangeInterceptor());
+	}
+
+	/**
+	 * Provides a system-default {@link Clock} for date/time operations.
+	 * @return a {@link Clock} using the system default zone
+	 */
+	@Bean
+	public Clock clock() {
+		return Clock.systemDefaultZone();
 	}
 
 }

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'schedule')}">
+
+<body>
+
+  <section class="liatrio-section">
+    <div class="liatrio-table-card">
+      <div class="liatrio-card-header">
+        <h2 th:text="#{newAppointment}">New Appointment</h2>
+      </div>
+
+      <div class="px-3 py-3">
+
+        <form th:object="${appointment}" th:action="@{/appointments/new}" method="post"
+              class="form-horizontal" id="appointmentForm">
+
+          <!-- Conflict errors from SchedulingConflictException -->
+          <div th:if="${conflicts != null and !#lists.isEmpty(conflicts)}" class="alert alert-danger" role="alert" aria-live="assertive">
+            <ul class="list-unstyled mb-0">
+              <li th:each="conflict : ${conflicts}" th:text="${conflict.message}">Conflict</li>
+            </ul>
+          </div>
+
+          <!-- General error message (e.g. resource not found) -->
+          <div th:if="${error}" class="alert alert-danger" role="alert" aria-live="assertive">
+            <span th:text="${error}">Error</span>
+          </div>
+
+          <!-- Owner Selection -->
+          <div class="form-group">
+            <label for="ownerSelect" class="col-sm-2 control-label" th:text="#{owner}">Owner</label>
+            <div class="col-sm-10">
+              <select id="ownerSelect" name="ownerId" class="form-select"
+                      aria-label="Select owner" required>
+                <option value="" th:text="#{selectOwner}">-- Select Owner --</option>
+                <option th:each="o : ${owners}"
+                        th:value="${o.id}"
+                        th:text="${o.firstName + ' ' + o.lastName + ' (' + o.telephone + ')'}"
+                        th:selected="${o.id == prefilledOwnerId}">
+                  George Franklin (6085551023)
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Pet Selection (filtered by owner via JS; server-side fallback shows all) -->
+          <div class="form-group">
+            <label for="petSelect" class="col-sm-2 control-label" th:text="#{pet}">Pet</label>
+            <div class="col-sm-10">
+              <select id="petSelect" name="petId" class="form-select"
+                      th:attr="data-placeholder=#{selectPet}"
+                      aria-label="Select pet" required>
+                <option value="" th:text="#{selectPet}">-- Select Pet --</option>
+                <option th:each="p : ${pets}"
+                        th:value="${p.id}"
+                        th:text="${p.name + ' (' + p.type.name + ')'}"
+                        th:attr="data-owner-id=${p.owner.id}"
+                        th:selected="${p.id == prefilledPetId}">
+                  Leo (cat)
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Appointment Type -->
+          <div class="form-group">
+            <label for="typeSelect" class="col-sm-2 control-label" th:text="#{appointmentType}">Appointment Type</label>
+            <div class="col-sm-10">
+              <select id="typeSelect" name="appointmentTypeId" class="form-select"
+                      aria-label="Select appointment type" required>
+                <option value="" th:text="#{selectType}">-- Select Type --</option>
+                <option th:each="t : ${appointmentTypes}"
+                        th:value="${t.id}"
+                        th:text="${t.name + ' (' + t.defaultDurationMinutes + ' min)'}"
+                        th:attr="data-duration=${t.defaultDurationMinutes},data-specialty-id=${t.requiredSpecialty?.id}">
+                  Checkup (30 min)
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Veterinarian (filtered dynamically by specialty + availability) -->
+          <div class="form-group">
+            <label for="vetSelect" class="col-sm-2 control-label" th:text="#{selectVet}">Veterinarian</label>
+            <div class="col-sm-10">
+              <select id="vetSelect" name="vetId" class="form-select"
+                      th:attr="data-placeholder=#{selectVet}"
+                      aria-label="Select veterinarian" required>
+                <option value="" th:text="#{selectVet}">-- Select Vet --</option>
+                <option th:each="v : ${vets}"
+                        th:value="${v.id}"
+                        th:text="${v.firstName + ' ' + v.lastName}"
+                        th:attr="data-specialties=${v.specialties}"
+                        th:selected="${v.id == prefilledVetId}">
+                  James Carter
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Date -->
+          <div class="form-group">
+            <label for="appointmentDate" class="col-sm-2 control-label" th:text="#{date}">Date</label>
+            <div class="col-sm-10">
+              <input type="date" id="appointmentDate" name="date"
+                     class="form-control"
+                     th:value="${prefilledDate}"
+                     th:min="${today}"
+                     aria-label="Appointment date" required />
+            </div>
+          </div>
+
+          <!-- Start Time (populated dynamically by JS; server-side fallback for pre-fills) -->
+          <div class="form-group">
+            <label for="startTimeSelect" class="col-sm-2 control-label" th:text="#{startTime}">Start Time</label>
+            <div class="col-sm-10">
+              <select id="startTimeSelect" name="startTime" class="form-select"
+                      th:field="*{startTime}"
+                      th:attr="data-placeholder=#{selectTime}"
+                      aria-label="Select start time" required>
+                <option value="" th:text="#{selectTime}">-- Select Time --</option>
+                <!-- Options populated dynamically via AJAX; server-side fallback for pre-filled slots: -->
+                <option th:each="slot : ${timeSlots}"
+                        th:value="${slot}"
+                        th:text="${slot}"
+                        th:selected="${slot == prefilledTime}">
+                  09:00
+                </option>
+              </select>
+              <small id="noSlotsMessage" class="text-muted d-none" th:text="#{noSlotsAvailable}">
+                No available slots for this vet and date.
+              </small>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label for="notes" class="col-sm-2 control-label" th:text="#{appointmentNotes}">Notes</label>
+            <div class="col-sm-10">
+              <textarea id="notes" name="notes" class="form-control"
+                        th:field="*{notes}" rows="3" maxlength="500"
+                        aria-label="Appointment notes"></textarea>
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button type="submit" class="btn btn-primary" th:text="#{bookAppointment}">Book Appointment</button>
+              <a th:href="@{/appointments/schedule}" class="btn btn-outline-secondary ms-2"
+                 th:text="#{cancel}">Cancel</a>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </section>
+
+  <script th:src="@{/resources/js/appointment-form.js}"></script>
+
+</body>
+
+</html>
